@@ -1,0 +1,102 @@
+[gd_resource type="Theme" format=3 uid="uid://e1w9q8r7t6y5u"]
+
+[resource]
+default_font = SubResource("FontFile_1")
+
+[sub_resource type="FontFile" id="FontFile_1"]
+antialiasing = 1
+generate_mipmaps = false
+multichannel_signed_distance_field = false
+msdf_pixel_range = 8
+msdf_size = 48
+oversampling = 0.0
+font_data = ExtResource("1_8ms2j")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1"]
+bg_color = Color(0.2, 0.2, 0.2, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.5, 0.5, 0.5, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+expand_margin_left = 5.0
+expand_margin_top = 5.0
+expand_margin_right = 5.0
+expand_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2"]
+bg_color = Color(0.3, 0.3, 0.3, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.7, 0.7, 0.7, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+expand_margin_left = 5.0
+expand_margin_top = 5.0
+expand_margin_right = 5.0
+expand_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3"]
+bg_color = Color(0.1, 0.5, 0.8, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.2, 0.6, 0.9, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+expand_margin_left = 10.0
+expand_margin_top = 5.0
+expand_margin_right = 10.0
+expand_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4"]
+bg_color = Color(0.2, 0.6, 0.9, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.7, 1, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+expand_margin_left = 10.0
+expand_margin_top = 5.0
+expand_margin_right = 10.0
+expand_margin_bottom = 5.0
+
+[resource/theme_item_types/Control]
+font_size = 16
+font_color = Color(1, 1, 1, 1)
+
+[resource/theme_item_types/LineEdit]
+font_size = 16
+font_color = Color(1, 1, 1, 1)
+font_color_selected = Color(0, 0, 0, 1)
+selection_color = Color(0.5, 0.8, 1, 1)
+caret_color = Color(1, 1, 1, 1)
+normal = SubResource("StyleBoxFlat_1")
+focus = SubResource("StyleBoxFlat_2")
+read_only = SubResource("StyleBoxFlat_1")
+
+[resource/theme_item_types/Button]
+font_size = 16
+font_color = Color(1, 1, 1, 1)
+font_color_hover = Color(1, 1, 1, 1)
+font_color_pressed = Color(0.8, 0.8, 0.8, 1)
+font_color_disabled = Color(0.5, 0.5, 0.5, 1)
+normal = SubResource("StyleBoxFlat_3")
+hover = SubResource("StyleBoxFlat_4")
+pressed = SubResource("StyleBoxFlat_4")
+disabled = SubResource("StyleBoxFlat_1")

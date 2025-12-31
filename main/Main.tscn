@@ -1,0 +1,20 @@
+[gd_scene load_steps=8 format=3 uid="uid://d8w9q7r6t5y4i"]
+
+[ext_resource type="Script" path="res://scripts/Main.gd" id="1_6kq9g"]
+[ext_resource type="PackedScene" uid="uid://f2q9w8e7r6t5y" path="res://actors/Tank.tscn" id="2_8lr0h"]
+[ext_resource type="PackedScene" uid="uid://g3r0e9w8t7y6u" path="res://actors/Artillery.tscn" id="3_9ms1i"]
+[ext_resource type="PackedScene" uid="uid://h4t1r0y9u8i7o" path="res://ui/GameUI.tscn" id="4_0nt2j"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_6kq9g")
+
+[node name="Artillery" parent="." instance=ExtResource("3_9ms1i")]
+position = Vector2(100, 300)
+
+[node name="TanksRoot" type="Node2D" parent="."]
+
+[node name="TankSpawnTimer" type="Timer" parent="."]
+wait_time = 3.0
+autostart = true
+
+[node name="GameUI" parent="." instance=ExtResource("4_0nt2j")]

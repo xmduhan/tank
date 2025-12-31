@@ -1,0 +1,37 @@
+[gd_scene load_steps=5 format=3 uid="uid://c9v8q7w6r5t4y"]
+
+[ext_resource type="Script" path="res://scripts/GameUI.gd" id="1_5jq8f"]
+[ext_resource type="Theme" uid="uid://e1w9q8r7t6y5u" path="res://default_theme.tres" id="2_7kq9g"]
+
+[node name="GameUI" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_5jq8f")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+alignment = 1
+
+[node name="ScoreLabel" type="Label" parent="VBoxContainer"]
+text = "得分: 0"
+horizontal_alignment = 1
+vertical_alignment = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="AnswerInput" type="LineEdit" parent="VBoxContainer/HBoxContainer"]
+placeholder_text = "输入答案"
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("2_7kq9g")
+
+[node name="SubmitButton" type="Button" parent="VBoxContainer/HBoxContainer"]
+text = "提交"
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("2_7kq9g")

@@ -1,0 +1,21 @@
+[gd_scene load_steps=6 format=3 uid="uid://f0s1t9y8u7i6o"]
+
+[ext_resource type="Script" path="res://scripts/Tank.gd" id="1_8ms1i"]
+[ext_resource type="Texture2D" uid="uid://j6p9o8l7k2j1h" path="res://icon.svg" id="2_0nt2j"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pg5ge"]
+
+[node name="Tank" type="Area2D"]
+script = ExtResource("1_8ms1i")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_0nt2j")
+scale = Vector2(1.5, 1.5)
+
+[node name="Label" type="Label" parent="."]
+position = Vector2(0, -40)
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_pg5ge")

@@ -27,18 +27,23 @@ func _spawn_tank():
 	var num2 = randi() % 21
 	var answer = num1 + num2
 	
-	# 设置坦克的算式和答案，并放置在屏幕右侧
-	tank.global_position = Vector2(1200, 300)
+	# 设置坦克的算式和答案，并放置在屏幕顶部随机位置
+	var random_x = randf_range(100, 1100)  # 屏幕宽度约1200，留出边界
+	tank.global_position = Vector2(random_x, -50)  # 从屏幕顶部上方开始
+	
+	# 设置坦克的旋转，使其朝下（默认坦克图片朝右，旋转90度使其朝下）
+	tank.rotation_degrees = 90
+	
 	tank.setup(num1, num2, answer)
 	
 	# 保存到活跃坦克字典
 	active_tanks[answer] = tank
 	
-	# 创建移动动画：从右向左移动
+	# 创建移动动画：从上向下移动
 	var tween = create_tween()
-	var move_distance = 1300 # 从x=1200移动到x=-100
+	var move_distance = 800  # 从y=-50移动到y=750（屏幕底部下方）
 	var move_duration = move_distance / 60.0 # 假设速度为60像素/秒
-	tween.tween_property(tank, "position:x", -100, move_duration)
+	tween.tween_property(tank, "position:y", 750, move_duration)
 	tween.tween_callback(_on_tank_escape.bind(tank, answer))
 
 # 当玩家提交答案时调用
@@ -51,6 +56,7 @@ func _on_answer_submitted(answer: int):
 		game_ui.update_score(10)
 		# 从字典中移除，防止重复击中
 		active_tanks.erase(answer)
+		
 	else:
 		# 答案错误，暂时不做处理（可扩展为扣分或提示）
 		print("答案错误或坦克不存在。")

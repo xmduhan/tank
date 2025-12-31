@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://bw1q8q9v8k2s1"]
+[gd_scene load_steps=4 format=3 uid="uid://bw1q8rav8k2s1"]
 
-[ext_resource type="Script" path="res://scripts/Artillery.gd" id="1_4hq6e"]
-[ext_resource type="Texture2D" uid="uid://d0v8b9q8r7c6v" path="res://icon.svg" id="2_6hq7f"]
+[ext_resource type="Script" uid="uid://bp5e2wkd7evue" path="res://scripts/Artillery.gd" id="1_4hq6e"]
+[ext_resource type="Texture2D" uid="uid://c2gbf7wp8kav" path="res://actors/artillery.png" id="2_yljy8"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_uh4fd"]
 
@@ -9,8 +9,8 @@
 script = ExtResource("1_4hq6e")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("2_6hq7f")
-scale = Vector2(2, 2)
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("2_yljy8")
 
 [node name="ShootPosition" type="Marker2D" parent="."]
 position = Vector2(50, 0)

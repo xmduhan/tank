@@ -10,13 +10,12 @@
 script = ExtResource("1_x633a")
 
 [node name="turret" type="Sprite2D" parent="."]
-scale = Vector2(0.1, 0.1)
 texture = ExtResource("2_0el1g")
 region_enabled = true
 region_rect = Rect2(93, 51, 129, 129)
 
 [node name="hull" type="Sprite2D" parent="."]
-scale = Vector2(0.010000001, 0.010000001)
+scale = Vector2(0.8, 0.8)
 texture = ExtResource("3_83kth")
 region_enabled = true
 region_rect = Rect2(57, 57, 140, 140)

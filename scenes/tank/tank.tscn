@@ -9,12 +9,12 @@
 [node name="Tank" type="Area2D"]
 script = ExtResource("1_x633a")
 
-[node name="turret" type="Sprite2D" parent="."]
+[node name="body" type="Sprite2D" parent="."]
 texture = ExtResource("2_0el1g")
 region_enabled = true
 region_rect = Rect2(93, 51, 129, 129)
 
-[node name="hull" type="Sprite2D" parent="."]
+[node name="turret" type="Sprite2D" parent="."]
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("3_83kth")
 region_enabled = true

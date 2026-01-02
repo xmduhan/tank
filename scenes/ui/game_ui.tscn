@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://c9v8q7w6r5t4y"]
+[gd_scene load_steps=5 format=3 uid="uid://dav8q7w6r5t4y"]
 
-[ext_resource type="Script" path="res://scripts/GameUI.gd" id="1_5jq8f"]
-[ext_resource type="Theme" uid="uid://e1w9q8r7t6y5u" path="res://default_theme.tres" id="2_7kq9g"]
+[ext_resource type="Script" uid="uid://bx4kwdrvpsvpu" path="res://scenes/ui/game_ui.gd" id="1_5jq8f"]
+[ext_resource type="Theme" path="res://default_theme.tres" id="2_7kq9g"]
 
 [node name="GameUI" type="Control"]
 anchor_right = 1.0

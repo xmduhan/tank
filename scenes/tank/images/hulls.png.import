@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://coaisi0tw54cc"
-path="res://.godot/imported/tank.png-f3b4f1995b7f011f5497e200c9371509.ctex"
+uid="uid://be2k2o8j4kuv2"
+path="res://.godot/imported/hulls.png-4a998dbc4b75e7d093c3bc0821534acc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://actors/tank.png"
-dest_files=["res://.godot/imported/tank.png-f3b4f1995b7f011f5497e200c9371509.ctex"]
+source_file="res://scenes/tank/images/hulls.png"
+dest_files=["res://.godot/imported/hulls.png-4a998dbc4b75e7d093c3bc0821534acc.ctex"]
 
 [params]
 

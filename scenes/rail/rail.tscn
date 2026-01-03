@@ -1,8 +1,10 @@
-[gd_scene load_steps=2 format=3 uid="uid://dieyfvxa1wk78"]
+[gd_scene load_steps=3 format=3 uid="uid://dieyfvxa1wk78"]
 
 [ext_resource type="Texture2D" uid="uid://5iiibkweo38c" path="res://scenes/rail/images/rail.png" id="1_s7udn"]
+[ext_resource type="Script" uid="uid://d5s9q8f7e2r1" path="res://scenes/rail/rail.gd" id="2_jk3lm"]
 
 [node name="Rail" type="Node2D"]
+script = ExtResource("2_jk3lm")
 
 [node name="TextureRect" type="TextureRect" parent="."]
 offset_right = 40.0

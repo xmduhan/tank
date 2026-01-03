@@ -11,33 +11,22 @@ extends Node2D
 var active_tanks = {}  # 字典：answer -> tank instance
 
 func _ready():
-	# 创建炮塔
 	# create_tower()
-	
-	# 创建东西向铁轨，贯穿整个屏幕
 	await create_rail()
 
 func create_tower():
-	# 加载炮塔到屏幕中间位置
 	var tower_scene = preload("res://scenes/tower/tower.tscn")
 	var tower_instance = tower_scene.instantiate()
-	
-	# 获取屏幕中心位置
 	var screen_center = get_viewport_rect().size / 2
 	tower_instance.position = screen_center
-	print("炮塔位置：", screen_center)
-	
-	# 添加到场景中
 	add_child(tower_instance)
 
 func create_rail():
-	# 加载铁轨场景
 	var rail_scene = preload("res://scenes/rail/rail.tscn")
 	var rail_instance = rail_scene.instantiate()
 	
 	var screen_center = get_viewport_rect().size / 2
 	rail_instance.position = screen_center 
 	
-	# 添加到场景中
 	add_child(rail_instance)
 	

@@ -3,36 +3,39 @@ extends Node2D
 @export var length: float = 1.0
 @export var is_horizontal: bool = false
 
-@onready var texture_rect: TextureRect = $TextureRect
+@onready var tilemap: TileMap = $RailTileMap
 
 func _ready() -> void:
 	update_rail()
 
 func update_rail() -> void:
-	if not texture_rect:
+	if not tilemap:
 		return
 	
-	# 设置铁轨方向
+	# 清除所有现有的图块
+	tilemap.clear()
+	
+	# 计算需要绘制的图块数量
+	var tile_size = tilemap.tile_set.tile_size
+	var tile_count = int(ceil(length))
+	
 	if is_horizontal:
-		texture_rect.rotation_degrees = 90
+		# 水平铁轨
+		for i in range(tile_count):
+			var cell_position = Vector2i(i, 0)
+			tilemap.set_cell(0, cell_position, 0, Vector2i(0, 0))
 	else:
-		texture_rect.rotation_degrees = 0
+		# 垂直铁轨
+		for i in range(tile_count):
+			var cell_position = Vector2i(0, i)
+			tilemap.set_cell(0, cell_position, 1, Vector2i(0, 0))
 	
-	# 设置铁轨长度
-	var texture_size = texture_rect.texture.get_size()
-	var scale_factor = length
+	# 调整TileMap的位置使其居中
+	var total_size = Vector2(tile_size.x * tile_count, tile_size.y)
 	if is_horizontal:
-		texture_rect.scale = Vector2(scale_factor, 1)
+		tilemap.position = Vector2(-total_size.x / 2, -tile_size.y / 2)
 	else:
-		texture_rect.scale = Vector2(1, scale_factor)
-	
-	# 调整TextureRect的大小以匹配缩放后的纹理
-	var scaled_size = texture_size * texture_rect.scale
-	texture_rect.custom_minimum_size = scaled_size
-	texture_rect.size = scaled_size
-	
-	# 设置锚点为中心，确保纹理在节点位置居中
-	texture_rect.pivot_offset = scaled_size / 2
+		tilemap.position = Vector2(-tile_size.x / 2, -total_size.y / 2)
 
 func set_length(new_length: float) -> void:
 	length = new_length

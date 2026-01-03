@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://dieyfvxa1wk78"]
+
+[ext_resource type="Texture2D" uid="uid://5iiibkweo38c" path="res://scenes/rail/images/rail.png" id="1_s7udn"]
+
+[node name="Rail" type="Node2D"]
+
+[node name="TextureRect" type="TextureRect" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("1_s7udn")

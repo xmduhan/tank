@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://va8dhointb8b"
-path="res://.godot/imported/rail.png-6bdfd08c85bc54fe95ff5aba9297dee3.ctex"
+uid="uid://5iiibkweo38c"
+path="res://.godot/imported/rail.png-b5e03c66a8199fa6285178d71d018184.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://scenes/tower/images/rail.png"
-dest_files=["res://.godot/imported/rail.png-6bdfd08c85bc54fe95ff5aba9297dee3.ctex"]
+source_file="res://scenes/rail/images/rail.png"
+dest_files=["res://.godot/imported/rail.png-b5e03c66a8199fa6285178d71d018184.ctex"]
 
 [params]
 

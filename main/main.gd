@@ -15,7 +15,7 @@ func _ready():
 	# create_tower()
 	
 	# 创建东西向铁轨，贯穿整个屏幕
-	await create_horizontal_rail()
+	await create_rail()
 
 func create_tower():
 	# 加载炮塔到屏幕中间位置
@@ -30,29 +30,14 @@ func create_tower():
 	# 添加到场景中
 	add_child(tower_instance)
 
-func create_horizontal_rail():
+func create_rail():
 	# 加载铁轨场景
 	var rail_scene = preload("res://scenes/rail/rail.tscn")
 	var rail_instance = rail_scene.instantiate()
 	
-	# 获取屏幕尺寸
-	var screen_size = get_viewport_rect().size
-	
-	# 计算需要的铁轨长度（屏幕宽度除以铁轨纹理宽度128）
-	var rail_texture_width = 128.0
-	var required_length = screen_size.x / rail_texture_width
-	
-	# 设置铁轨属性
-	rail_instance.set_length(required_length)
-	rail_instance.set_horizontal(false)
-	
-	# 将铁轨放置在屏幕中间高度位置
-	rail_instance.position = Vector2(screen_size.x / 2, screen_size.y / 2)
+	var screen_center = get_viewport_rect().size / 2
+	rail_instance.position = screen_center 
 	
 	# 添加到场景中
 	add_child(rail_instance)
 	
-	print("创建东西向铁轨，长度：", required_length, "，位置：", rail_instance.position)
-	
-	# 等待铁轨的tile_set加载完成
-	await rail_instance.ensure_tile_set_loaded()

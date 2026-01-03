@@ -8,4 +8,5 @@ script = ExtResource("3_abcde")
 
 [node name="RailTileMap" type="TileMapLayer" parent="."]
 y_sort_enabled = true
+texture_repeat = 2
 tile_set = ExtResource("2_fetd1")

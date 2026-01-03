@@ -3,9 +3,6 @@ extends Node2D
 # 预加载轨道块场景
 var rail_block_scene = preload("res://scenes/rail/rail_block.tscn")
 
-# 可访问的高度属性，用于控制轨道在垂直方向的位置
-@export var height: float = 0.0
-
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	create_horizontal_rail_across_screen()
@@ -24,13 +21,13 @@ func create_horizontal_rail_across_screen():
 	
 	# 计算起始位置，使得轨道在屏幕中央垂直位置，并从屏幕左侧开始
 	var start_x = -viewport_size.x / 2  # 从屏幕左侧边缘开始
-	var center_y = height  # 使用height属性控制垂直位置
+	var center_y = 0.0  # 固定垂直位置为0
 	
 	# 创建并放置轨道块
 	for i in range(num_blocks):
 		var rail_block = rail_block_scene.instantiate()
 		
-		# 设置位置：水平排列，使用height属性控制垂直位置
+		# 设置位置：水平排列，垂直位置固定为0
 		rail_block.position = Vector2(start_x + i * block_size, center_y)
 		
 		# 确保轨道是水平的（rail_block.gd中horizontal默认为true）

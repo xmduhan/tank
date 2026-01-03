@@ -12,13 +12,13 @@ var active_tanks = {}  # 字典：answer -> tank instance
 
 func _ready():
 	# 加载炮塔到屏幕中间位置
-	var turret_scene = preload("res://scenes/tank/tank.tscn")
-	var turret_instance = turret_scene.instantiate()
+	var tower_scene = preload("res://scenes/tower/tower.tscn")
+	var tower_instance = tower_scene.instantiate()
 	
 	# 获取屏幕中心位置
 	var screen_center = get_viewport_rect().size / 2
-	turret_instance.position = screen_center
+	tower_instance.position = screen_center
 	print("炮塔位置：", screen_center)
 	
 	# 添加到场景中
-	add_child(turret_instance)
+	add_child(tower_instance)

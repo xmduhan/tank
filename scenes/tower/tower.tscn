@@ -1,8 +1,8 @@
 [gd_scene load_steps=5 format=3 uid="uid://bw1q8rav8k2s1"]
 
 [ext_resource type="Script" uid="uid://bp5e2wkd7evue" path="res://scenes/tower/tower.gd" id="1_4hq6e"]
-[ext_resource type="Texture2D" uid="uid://c2gbf7wp8kav" path="res://scenes/tower/tower.png" id="2_yljy8"]
-[ext_resource type="Texture2D" uid="uid://csk8v7ld1vj3v" path="res://scenes/tower/rail.png" id="3_cbwxl"]
+[ext_resource type="Texture2D" uid="uid://dhi2nvtqx6ah4" path="res://scenes/tower/images/tower.png" id="2_cbwxl"]
+[ext_resource type="Texture2D" uid="uid://va8dhointb8b" path="res://scenes/tower/images/rail.png" id="3_cbwxl"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_uh4fd"]
 
@@ -11,15 +11,14 @@ script = ExtResource("1_4hq6e")
 
 [node name="tower" type="Sprite2D" parent="."]
 scale = Vector2(0.2, 0.2)
-texture = ExtResource("2_yljy8")
+texture = ExtResource("2_cbwxl")
+
+[node name="rail" type="Sprite2D" parent="."]
+rotation = 1.5707964
+texture = ExtResource("3_cbwxl")
 
 [node name="ShootPosition" type="Marker2D" parent="."]
 position = Vector2(50, 0)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_uh4fd")
-
-[node name="rail" type="Sprite2D" parent="."]
-rotation = 1.5707964
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("3_cbwxl")

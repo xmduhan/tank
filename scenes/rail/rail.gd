@@ -30,6 +30,9 @@ func update_rail() -> void:
 	var scaled_size = texture_size * texture_rect.scale
 	texture_rect.custom_minimum_size = scaled_size
 	texture_rect.size = scaled_size
+	
+	# 设置锚点为中心，确保纹理在节点位置居中
+	texture_rect.pivot_offset = scaled_size / 2
 
 func set_length(new_length: float) -> void:
 	length = new_length

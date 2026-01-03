@@ -11,6 +11,7 @@ extends Node2D
 func _ready():
 	# 应用位置偏移
 	position += position_offset
+	print('position:', position)
 	
 	# 根据方向属性调整轨道显示
 	if not horizontal:

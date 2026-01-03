@@ -5,25 +5,33 @@ extends Node2D
 
 @onready var tilemap_layer: TileMapLayer = $RailTileMap
 
+var _tile_set_loaded: bool = false
+
 func _ready() -> void:
 	print('rail._ready() is call')
+	# 等待tile_set加载完成
+	await ensure_tile_set_loaded()
 	update_rail()
+
+func ensure_tile_set_loaded() -> void:
+	# 如果tile_set已经存在，直接返回
+	if tilemap_layer and tilemap_layer.tile_set:
+		_tile_set_loaded = true
+		return
+	
+	# 否则等待tile_set加载
+	while tilemap_layer and not tilemap_layer.tile_set:
+		await get_tree().process_frame
+	
+	_tile_set_loaded = true
 
 func update_rail() -> void:
 	print('update_rail():1')
-	if not tilemap_layer:
+	if not tilemap_layer or not _tile_set_loaded:
+		print('TileMapLayer not ready')
 		return
+	
 	print('update_rail():2')
-	# 检查tile_set是否已加载
-	if not tilemap_layer.tile_set:
-		# 若未加载，延迟到下一帧再尝试更新
-		await get_tree().process_frame
-		# 再次检查，确保tile_set存在
-		if not tilemap_layer.tile_set:
-			print('update_rail():3')
-			# push_error("RailTileMapLayer's tile_set is still null after waiting.")
-			return
-	print('update_rail():4')
 	
 	# 清除所有现有的图块
 	tilemap_layer.clear()
@@ -55,8 +63,10 @@ func update_rail() -> void:
 
 func set_length(new_length: float) -> void:
 	length = new_length
-	update_rail()
+	if _tile_set_loaded:
+		update_rail()
 
 func set_horizontal(is_horiz: bool) -> void:
 	is_horizontal = is_horiz
-	update_rail()
+	if _tile_set_loaded:
+		update_rail()

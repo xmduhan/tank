@@ -1,5 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://dieyfvxa1wk78"]
+[gd_scene load_steps=3 format=3 uid="uid://dieyfvxa1wk78"]
 
+[ext_resource type="TileSet" uid="uid://cc666yv6kqf73" path="res://scenes/rail/images/tail.tres" id="2_fetd1"]
 [ext_resource type="Script" uid="uid://dnddd0cl2x2dk" path="res://scenes/rail/rail.gd" id="3_abcde"]
 
 [node name="Rail" type="Node2D"]
@@ -7,3 +8,4 @@ script = ExtResource("3_abcde")
 
 [node name="RailTileMap" type="TileMapLayer" parent="."]
 y_sort_enabled = true
+tile_set = ExtResource("2_fetd1")

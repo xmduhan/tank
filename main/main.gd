@@ -15,7 +15,7 @@ func _ready():
 	# create_tower()
 	
 	# 创建东西向铁轨，贯穿整个屏幕
-	create_horizontal_rail()
+	await create_horizontal_rail()
 
 func create_tower():
 	# 加载炮塔到屏幕中间位置
@@ -53,3 +53,6 @@ func create_horizontal_rail():
 	add_child(rail_instance)
 	
 	print("创建东西向铁轨，长度：", required_length, "，位置：", rail_instance.position)
+	
+	# 等待铁轨的tile_set加载完成
+	await rail_instance.ensure_tile_set_loaded()

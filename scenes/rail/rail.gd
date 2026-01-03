@@ -12,6 +12,15 @@ func update_rail() -> void:
 	if not tilemap:
 		return
 	
+	# 检查tile_set是否已加载
+	if not tilemap.tile_set:
+		# 若未加载，延迟到下一帧再尝试更新
+		await get_tree().process_frame
+		# 再次检查，确保tile_set存在
+		if not tilemap.tile_set:
+			push_error("RailTileMap's tile_set is still null after waiting.")
+			return
+	
 	# 清除所有现有的图块
 	tilemap.clear()
 	

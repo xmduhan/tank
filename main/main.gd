@@ -11,8 +11,6 @@ extends Node2D
 var active_tanks = {}  # 字典：answer -> tank instance
 
 func _ready():
-	# 连接UI和定时器信号
-	print('------ _ready() is called ---------')
 	
 	# 在屏幕中间位置创建一辆坦克
 	var tank_scene = preload("res://scenes/tank/tank.tscn")
@@ -21,10 +19,7 @@ func _ready():
 	# 获取屏幕中心位置
 	var screen_center = get_viewport_rect().size / 2
 	tank_instance.position = screen_center
+	print(screen_center)
 	
 	# 添加到场景中
-	add_child(tank_instance)
-
-
-func _draw() -> void:
-	print('------------- _draw() is called -------------')
+	# add_child(tank_instance)

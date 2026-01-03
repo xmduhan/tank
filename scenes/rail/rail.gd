@@ -6,20 +6,24 @@ extends Node2D
 @onready var tilemap_layer: TileMapLayer = $RailTileMap
 
 func _ready() -> void:
+	print('rail._ready() is call')
 	update_rail()
 
 func update_rail() -> void:
+	print('update_rail():1')
 	if not tilemap_layer:
 		return
-	
+	print('update_rail():2')
 	# 检查tile_set是否已加载
 	if not tilemap_layer.tile_set:
 		# 若未加载，延迟到下一帧再尝试更新
 		await get_tree().process_frame
 		# 再次检查，确保tile_set存在
 		if not tilemap_layer.tile_set:
-			push_error("RailTileMapLayer's tile_set is still null after waiting.")
+			print('update_rail():3')
+			# push_error("RailTileMapLayer's tile_set is still null after waiting.")
 			return
+	print('update_rail():4')
 	
 	# 清除所有现有的图块
 	tilemap_layer.clear()
@@ -27,6 +31,9 @@ func update_rail() -> void:
 	# 计算需要绘制的图块数量
 	var tile_size = tilemap_layer.tile_set.tile_size
 	var tile_count = int(ceil(length))
+	
+	# 打印调试信息
+	print("tile_size: ", tile_size, ", tile_count: ", tile_count)
 	
 	if is_horizontal:
 		# 水平铁轨

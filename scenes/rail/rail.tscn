@@ -1,12 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://dieyfvxa1wk78"]
+[gd_scene load_steps=2 format=3 uid="uid://dieyfvxa1wk78"]
 
-[ext_resource type="Texture2D" uid="uid://5iiibkweo38c" path="res://scenes/rail/images/rail.png" id="1_s7udn"]
-[ext_resource type="Script" uid="uid://dnddd0cl2x2dk" path="res://scenes/rail/rail.gd" id="2_jk3lm"]
-[ext_resource type="TileSet" uid="uid://dnddd0cl2x2dk" path="res://scenes/rail/rail_tileset.tres" id="3_abcde"]
+[ext_resource type="Script" uid="uid://dnddd0cl2x2dk" path="res://scenes/rail/rail.gd" id="3_abcde"]
 
 [node name="Rail" type="Node2D"]
-script = ExtResource("2_jk3lm")
+script = ExtResource("3_abcde")
 
 [node name="RailTileMap" type="TileMapLayer" parent="."]
-tile_set = ExtResource("3_abcde")
 y_sort_enabled = true

@@ -1,12 +1,14 @@
 [gd_scene load_steps=3 format=3 uid="uid://dieyfvxa1wk78"]
 
-[ext_resource type="TileSet" uid="uid://cc666yv6kqf73" path="res://scenes/rail/images/rail.tres" id="2_fetd1"]
-[ext_resource type="Script" uid="uid://dnddd0cl2x2dk" path="res://scenes/rail/rail.gd" id="3_abcde"]
+[ext_resource type="Texture2D" uid="uid://cc666yv6kqf73" path="res://scenes/rail/images/rail.png" id="1_rail"]
+[ext_resource type="Script" uid="uid://dnddd0cl2x2dk" path="res://scenes/rail/rail.gd" id="2_script"]
 
 [node name="Rail" type="Node2D"]
-script = ExtResource("3_abcde")
+script = ExtResource("2_script")
 
-[node name="RailTileMap" type="TileMapLayer" parent="."]
-y_sort_enabled = true
-texture_repeat = 2
-tile_set = ExtResource("2_fetd1")
+[node name="RailTexture" type="TextureRect" parent="."]
+texture = ExtResource("1_rail")
+expand_mode = 1
+stretch_mode = 3
+size = Vector2(128, 128)
+position = Vector2(-64, -64)  # 居中显示

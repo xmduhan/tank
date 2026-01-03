@@ -39,8 +39,8 @@ func create_horizontal_rail():
 	var required_length = screen_size.x / rail_texture_width
 	
 	# 设置铁轨属性
-	rail_instance.length = required_length
-	rail_instance.is_horizontal = true
+	rail_instance.set_length(required_length)
+	rail_instance.set_horizontal(true)
 	
 	# 将铁轨放置在屏幕中间高度位置
 	rail_instance.position = Vector2(screen_size.x / 2, screen_size.y / 2)

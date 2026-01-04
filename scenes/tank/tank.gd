@@ -3,7 +3,7 @@ extends Area2D
 # 车身旋转角度（度）- 初始指向东方(0度)
 var body_rotation: float = 90
 # 炮塔旋转角度（度）- 初始与车身方向一致
-var turret_rotation: float = 0
+var turret_rotation: float = 45
 # 移动速度（像素/秒）
 var move_speed: float = 20.0
 

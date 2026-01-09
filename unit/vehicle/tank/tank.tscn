@@ -1,7 +1,0 @@
-[gd_scene load_steps=3 format=3 uid="uid://bh01jm3oftb2k"]
-
-[ext_resource type="PackedScene" uid="uid://c6705smo23wgr" path="res://unit/vehicle/vehicle.tscn" id="1_ue0pf"]
-[ext_resource type="Script" uid="uid://bw44goms2ydlu" path="res://unit/vehicle/tank/tank.gd" id="2_4tg4t"]
-
-[node name="Tank" instance=ExtResource("1_ue0pf")]
-script = ExtResource("2_4tg4t")

@@ -8,7 +8,7 @@ var direction := Vector2.ZERO
 
 
 func _ready():
-    body = get_parent() as CharacterBody2D
+    body = get_parent() as CharacterBody2D  
     assert(body)
 
     # 自动连接同级 Input 组件
@@ -20,5 +20,5 @@ func _on_move_input(dir: Vector2):
     direction = dir
 
 func _physics_process(delta):
-    body.velocity = direction.normalized() * speed
+    body.velocity = direction * speed * delta * 60
     body.move_and_slide()

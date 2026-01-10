@@ -4,7 +4,9 @@
 [ext_resource type="Texture2D" uid="uid://d4nvf55355psj" path="res://assets/images/units/tank/turret.png" id="2_7bmx0"]
 [ext_resource type="Script" uid="uid://cdllwedfbais2" path="res://scripts/components/move.gd" id="3_vatmn"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_f12qm"]
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ymsbx"]
+radius = 16.0
+height = 32.0
 
 [node name="Base" type="CharacterBody2D"]
 
@@ -16,7 +18,7 @@ scale = Vector2(0.7, 0.7)
 texture = ExtResource("2_7bmx0")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("RectangleShape2D_f12qm")
+shape = SubResource("CapsuleShape2D_ymsbx")
 
 [node name="move" type="Node" parent="."]
 script = ExtResource("3_vatmn")

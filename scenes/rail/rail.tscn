@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://nj76lylqlpat"]
-
-[ext_resource type="Script" uid="uid://bd7vnw4tey6yk" path="res://scenes/rail/rail.gd" id="2_script"]
-
-[node name="Rail" type="Node2D"]
-script = ExtResource("2_script")

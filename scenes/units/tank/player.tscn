@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://cdl3r7o4hj35o"]
+
+[ext_resource type="PackedScene" uid="uid://b5e58720b0nfw" path="res://scenes/units/tank/base.tscn" id="1_r64ib"]
+[ext_resource type="Script" uid="uid://bsqsp4brt37hy" path="res://scripts/components/hjkl.gd" id="2_xu2sa"]
+
+[node name="Player" instance=ExtResource("1_r64ib")]
+
+[node name="hjkl" type="Node" parent="." index="4"]
+script = ExtResource("2_xu2sa")

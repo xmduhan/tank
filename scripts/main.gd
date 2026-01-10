@@ -9,7 +9,6 @@ func _ready():
     add_child(tank_instance)
     # 设置坦克位置为屏幕中心
     tank_instance.position = get_viewport_rect().size / 2
-    # tank_instance.position = Vector2(0, 0)
-    
+       
     # 设置坦克旋转90度
     print(tank_instance.rotation_degrees)

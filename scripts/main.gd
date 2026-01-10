@@ -5,7 +5,7 @@ func _ready():
     # spawn_enemy_tank()
     
     # 示例：在指定位置 (100, 200) 生成另一个敌人坦克
-    spawn_enemy_tank(Vector2(100, 200))
+    spawn_enemy_tank(Vector2(570, 180))
     
     # 在屏幕中心生成玩家坦克
     spawn_player_tank()

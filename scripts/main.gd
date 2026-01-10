@@ -2,7 +2,7 @@ extends Node2D
 
 func _ready():
     # 加载坦克场景
-    var tank_scene = load("res://scenes/units/tank/tank.tscn")
+    var tank_scene = load("res://scenes/units/tank/enemy.tscn")
     # 实例化坦克
     var tank_instance = tank_scene.instantiate()
     # 将坦克添加到当前场景

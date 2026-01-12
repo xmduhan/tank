@@ -15,5 +15,5 @@ func spawn_player_tank(position: Vector2):
     var player = load("res://scenes/units/tank/player.tscn").instantiate()
     add_child(player)
     player.position = position
-    player.rotation_degrees = 90  # 旋转90度
+    # player.rotation_degrees = 90  # 旋转90度
     return player

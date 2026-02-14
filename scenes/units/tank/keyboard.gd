@@ -1,7 +1,11 @@
 extends Node
-class_name Keyboard
 
-signal move_input(direction: Vector2)
+func _ready() -> void:
+	pass # Replace with function body.
+
+
+func _process(delta: float) -> void:
+	pass
 
 func _physics_process(delta):
 	var dir := Vector2.ZERO
@@ -14,5 +18,3 @@ func _physics_process(delta):
 		dir.y -= 1
 	if Input.is_key_pressed(KEY_J):
 		dir.y += 1
-
-	emit_signal("move_input", dir)

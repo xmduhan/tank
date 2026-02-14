@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://b5e58720b0nfw"]
+[gd_scene format=3 uid="uid://b5e58720b0nfw"]
 
 [ext_resource type="Texture2D" uid="uid://dsy8ok5xdu1dj" path="res://assets/images/units/tank/body.png" id="1_ymsbx"]
 [ext_resource type="Texture2D" uid="uid://d4nvf55355psj" path="res://assets/images/units/tank/turret.png" id="2_7bmx0"]
@@ -7,17 +7,17 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ymsbx"]
 size = Vector2(110, 60)
 
-[node name="Base" type="CharacterBody2D"]
+[node name="Base" type="CharacterBody2D" unique_id=1950633393]
 
-[node name="body" type="Sprite2D" parent="."]
+[node name="body" type="Sprite2D" parent="." unique_id=1977516932]
 texture = ExtResource("1_ymsbx")
 
-[node name="turret" type="Sprite2D" parent="."]
+[node name="turret" type="Sprite2D" parent="." unique_id=1776346176]
 scale = Vector2(0.7, 0.7)
 texture = ExtResource("2_7bmx0")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=666533737]
 shape = SubResource("RectangleShape2D_ymsbx")
 
-[node name="move" type="Node" parent="."]
+[node name="move" type="Node" parent="." unique_id=2088491131]
 script = ExtResource("3_vatmn")

@@ -9,26 +9,26 @@ var direction := Vector2.ZERO
 const BIAS := Vector2(.1, .1)
 
 func _ready():
-    body = get_parent() as CharacterBody2D
-    assert(body)
+	body = get_parent() as CharacterBody2D
+	assert(body)
 
-    # 自动连接同级 Input / AI 组件
-    for child in body.get_children():
-        if child.has_signal("move_input"):
-            child.connect("move_input", _on_move_input)
+	# 自动连接同级 Input / AI 组件
+	for child in body.get_children():
+		if child.has_signal("move_input"):
+			child.connect("move_input", _on_move_input)
 
 
 func _on_move_input(dir: Vector2):
-    direction = dir
+	direction = dir
 
 
 func _physics_process(delta):
-    # 1️⃣ 正常移动
-    body.velocity = direction * speed - BIAS
-    
-    # 2️⃣ 根据方向旋转坦克（瞬间转向）
-    if direction.length() > 0:
-        # 直接设置旋转角度，实现瞬间转向
-        body.rotation = direction.angle()
-    
-    body.move_and_slide()
+	# 1️⃣ 正常移动
+	body.velocity = direction * speed - BIAS
+	
+	# 2️⃣ 根据方向旋转坦克（瞬间转向）
+	if direction.length() > 0:
+		# 直接设置旋转角度，实现瞬间转向
+		body.rotation = direction.angle()
+	
+	body.move_and_slide()

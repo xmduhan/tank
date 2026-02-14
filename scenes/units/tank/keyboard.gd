@@ -8,13 +8,13 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	var direction := Vector2.ZERO
 
-	if Input.is_key_pressed(KEY_H):
+	if Input.is_key_pressed(KEY_A):
 		direction.x -= 1
-	if Input.is_key_pressed(KEY_L):
+	if Input.is_key_pressed(KEY_D):
 		direction.x += 1
-	if Input.is_key_pressed(KEY_K):
+	if Input.is_key_pressed(KEY_W):
 		direction.y -= 1
-	if Input.is_key_pressed(KEY_J):
+	if Input.is_key_pressed(KEY_S):
 		direction.y += 1
 
 	# 防止斜向移动更快

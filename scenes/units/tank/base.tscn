@@ -33,7 +33,7 @@ script = ExtResource("4_arkgd")
 [node name="range_shape" type="CollisionShape2D" parent="attack_range" unique_id=271249326]
 shape = SubResource("CircleShape2D_arkgd")
 
-[node name="health" type="Node" parent="." unique_id=991234001]
+[node name="health" type="Node2D" parent="." unique_id=991234001]
 script = ExtResource("5_health")
 show_seconds = 10.0
 bar_size = Vector2(200, 200)

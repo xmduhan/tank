@@ -1,6 +1,6 @@
-extends Node
+extends Node2D
 class_name HealthComponent
-## 血量组件：管理血量数值，提供伤害/治疗接口与信号。
+## 血量组件：管理血量数值，提供伤害/治疗接口与信号，在对象正上方显示血量。
 
 signal health_changed(current: float, max_value: float, delta: float)
 signal died()
@@ -11,9 +11,18 @@ signal died()
         _current = clamp(_current, 0.0, max_health)
         _emit_changed(0.0)
 
+@export var show_seconds: float = 10.0
+@export var bar_size: Vector2 = Vector2(200, 200)
+@export var bar_offset: Vector2 = Vector2(-100, 0)
+@export var bg_color: Color = Color(0.4, 0, 0, 0.549)
+
+@export var text_offset: Vector2 = Vector2(0, -50)
+@export var font_size: int = 16
+@export var font_color: Color = Color.WHITE
+
 var _current: float = 100.0
 
-@onready var _host: Node = get_parent()
+@onready var _host: Node2D = get_parent() as Node2D
 
 
 # ─── Computed ─────────────────────────────────────────────
@@ -28,8 +37,24 @@ var ratio: float:
 # ─── Lifecycle ────────────────────────────────────────────
 
 func _ready() -> void:
-    assert(_host != null, "HealthComponent requires a host(parent) node.")
+    assert(_host != null, "HealthComponent requires a host(parent) Node2D.")
     _current = clamp(_current, 0.0, max_health)
+    top_level = true
+    z_index = 100
+
+
+func _process(_delta: float) -> void:
+    if is_instance_valid(_host):
+        global_position = _host.global_position + text_offset
+    queue_redraw()
+
+
+func _draw() -> void:
+    var font := ThemeDB.fallback_font
+    var text := "%d / %d" % [int(_current), int(max_health)]
+    var string_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
+    var pos := Vector2(-string_size.x / 2.0, string_size.y / 2.0)
+    draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, font_color)
 
 
 # ─── Public API ───────────────────────────────────────────

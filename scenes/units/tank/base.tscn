@@ -35,3 +35,7 @@ shape = SubResource("CircleShape2D_arkgd")
 
 [node name="health" type="Node" parent="." unique_id=991234001]
 script = ExtResource("5_health")
+show_seconds = 10.0
+bar_size = Vector2(200, 200)
+bar_offset = Vector2(0, 0)
+bg_color = Color(0.4, 0, 0, 0.54901963)

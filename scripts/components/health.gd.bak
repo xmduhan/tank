@@ -29,13 +29,16 @@ var _bar: _HealthBar
 var _hide_timer: Timer
 
 
+# ─── Computed ─────────────────────────────────────────────
+
 var current_health: float:
     get: return _current
-
 
 var ratio: float:
     get: return clamp(_current / max_health, 0.0, 1.0)
 
+
+# ─── Lifecycle ────────────────────────────────────────────
 
 func _ready() -> void:
     assert(_host != null, "HealthComponent requires a host(parent) node.")
@@ -43,13 +46,17 @@ func _ready() -> void:
 
     _ensure_ui()
     _sync_ui()
+    # 改为持续显示
     _set_bar_visible(true)
 
 
 func _exit_tree() -> void:
+    # bar 是挂在宿主上的，组件移除时做一次清理，避免编辑器/运行时热重载残留。
     if is_instance_valid(_bar):
         _bar.queue_free()
 
+
+# ─── Public API ───────────────────────────────────────────
 
 func set_health(value: float) -> void:
     var new_value: float = clamp(value, 0.0, max_health)
@@ -59,6 +66,7 @@ func set_health(value: float) -> void:
 
     _current = new_value
     _emit_changed(delta)
+
     _on_value_changed()
 
     if is_zero_approx(_current):
@@ -77,8 +85,11 @@ func heal(amount: float) -> void:
     set_health(_current + amount)
 
 
+# ─── Internals ────────────────────────────────────────────
+
 func _handle_death() -> void:
     died.emit()
+    # 不在此处 queue_free()：让外部决定死亡表现/销毁时机。
 
 
 func _emit_changed(delta: float) -> void:
@@ -88,12 +99,14 @@ func _emit_changed(delta: float) -> void:
 func _on_value_changed() -> void:
     _ensure_ui()
     _sync_ui()
+    # 持续显示：不再闪烁/隐藏
     _set_bar_visible(true)
 
 
 func _ensure_ui() -> void:
     if not is_instance_valid(_bar):
         _create_bar()
+    # Timer 仍创建以兼容旧结构/热重载，但持续显示模式下不会再启动它
     if not is_instance_valid(_hide_timer):
         _create_timer()
 
@@ -111,12 +124,14 @@ func _set_bar_visible(visible: bool) -> void:
 func _create_bar() -> void:
     _bar = _HealthBar.new()
     _bar.name = "health_bar"
+    _bar.size = bar_size
+    _bar.position = bar_offset - bar_size * 0.5
     _bar.z_index = 1000
-    _bar.position = bar_offset
-    _bar.set_style(bar_size, bg_color, fg_color, border_color, border_width)
+    _bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _bar.set_colors(bg_color, fg_color, border_color, border_width)
     _bar.set_ratio(ratio)
 
-    # 用 Node2D 自绘，挂在宿主(CharacterBody2D/Node2D) 下稳定可见
+    # Control 挂在宿主下：随宿主移动/旋转（需求更复杂可改 CanvasLayer）。
     _host.add_child(_bar)
 
 
@@ -129,9 +144,9 @@ func _create_timer() -> void:
     add_child(_hide_timer)
 
 
-class _HealthBar extends Node2D:
+# ─── Internal Control for drawing ─────────────────────────
+class _HealthBar extends Control:
     var _ratio: float = 1.0
-    var _size: Vector2 = Vector2(90, 10)
     var _bg: Color = Color(0, 0, 0, 0.55)
     var _fg: Color = Color(0.25, 0.95, 0.25, 0.9)
     var _border: Color = Color(1, 1, 1, 0.35)
@@ -141,8 +156,7 @@ class _HealthBar extends Node2D:
         _ratio = clamp(v, 0.0, 1.0)
         queue_redraw()
 
-    func set_style(size: Vector2, bg: Color, fg: Color, border: Color, border_w: float) -> void:
-        _size = size
+    func set_colors(bg: Color, fg: Color, border: Color, border_w: float) -> void:
         _bg = bg
         _fg = fg
         _border = border
@@ -150,14 +164,15 @@ class _HealthBar extends Node2D:
         queue_redraw()
 
     func _draw() -> void:
-        # 以自身 position 为中心点，在头顶居中绘制
-        var top_left := -_size * 0.5
-        var rect := Rect2(top_left, _size)
+        var rect := Rect2(Vector2.ZERO, size)
 
+        # background
         draw_rect(rect, _bg, true)
 
-        var fill := Rect2(top_left, Vector2(_size.x * _ratio, _size.y))
+        # fill
+        var fill := Rect2(Vector2.ZERO, Vector2(size.x * _ratio, size.y))
         draw_rect(fill, _fg, true)
 
+        # border
         if _border_w > 0.0:
             draw_rect(rect, _border, false, _border_w)

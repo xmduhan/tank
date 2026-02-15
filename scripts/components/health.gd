@@ -1,6 +1,6 @@
 extends Node2D
 class_name HealthComponent
-## 血量组件：管理血量数值，提供伤害/治疗接口与信号，在对象正上方显示血量。
+## 血量组件：管理血量数值，提供伤害/治疗接口与信号，显示血条与损耗动画。
 
 signal health_changed(current: float, max_value: float, delta: float)
 signal died()
@@ -12,15 +12,22 @@ signal died()
         _emit_changed(0.0)
 
 @export var show_seconds: float = 10.0
-@export var bar_size: Vector2 = Vector2(200, 200)
-@export var bar_offset: Vector2 = Vector2(-100, 0)
-@export var bg_color: Color = Color(0.4, 0, 0, 0.549)
 
+@export_group("Bar")
+@export var bar_size: Vector2 = Vector2(80, 6)
+@export var bar_offset: Vector2 = Vector2(-40, 10)
+@export var bg_color: Color = Color(0.4, 0, 0, 0.549)
+@export var bar_color: Color = Color(0.2, 0.8, 0.2, 0.8)
+@export var damage_color: Color = Color(0.9, 0.6, 0.1, 0.8)
+@export var damage_lerp_speed: float = 2.0
+
+@export_group("Text")
 @export var text_offset: Vector2 = Vector2(0, -50)
 @export var font_size: int = 16
 @export var font_color: Color = Color.WHITE
 
 var _current: float = 100.0
+var _display_health: float = 100.0
 
 @onready var _host: Node2D = get_parent() as Node2D
 
@@ -31,7 +38,7 @@ var current_health: float:
     get: return _current
 
 var ratio: float:
-    get: return clamp(_current / max_health, 0.0, 1.0)
+    get: return clampf(_current / max_health, 0.0, 1.0)
 
 
 # ─── Lifecycle ────────────────────────────────────────────
@@ -39,17 +46,53 @@ var ratio: float:
 func _ready() -> void:
     assert(_host != null, "HealthComponent requires a host(parent) Node2D.")
     _current = clamp(_current, 0.0, max_health)
+    _display_health = _current
     top_level = true
     z_index = 100
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
     if is_instance_valid(_host):
         global_position = _host.global_position + text_offset
+
+    # 平滑动画：损耗缓慢下降，治疗立即跟上
+    if _display_health > _current:
+        _display_health = lerpf(_display_health, _current, delta * damage_lerp_speed)
+        if absf(_display_health - _current) < 0.1:
+            _display_health = _current
+    else:
+        _display_health = _current
+
     queue_redraw()
 
 
 func _draw() -> void:
+    _draw_bar()
+    _draw_text()
+
+
+# ─── Bar Drawing ──────────────────────────────────────────
+
+func _draw_bar() -> void:
+    # 1) 背景 — 空血底色
+    draw_rect(Rect2(bar_offset, bar_size), bg_color)
+
+    # 2) 损耗进度 — 橙黄色，从旧血量缓慢缩减到新血量
+    var display_ratio: float = clampf(_display_health / max_health, 0.0, 1.0)
+    var damage_width: float = bar_size.x * display_ratio
+    if damage_width > 0.5:
+        draw_rect(Rect2(bar_offset, Vector2(damage_width, bar_size.y)), damage_color)
+
+    # 3) 当前血量 — 绿色，即时反映真实血量
+    var health_width: float = bar_size.x * ratio
+    if health_width > 0.5:
+        draw_rect(Rect2(bar_offset, Vector2(health_width, bar_size.y)), bar_color)
+
+    # 4) 边框
+    draw_rect(Rect2(bar_offset, bar_size), Color(0, 0, 0, 0.6), false, 1.0)
+
+
+func _draw_text() -> void:
     var font := ThemeDB.fallback_font
     var text := "%d / %d" % [int(_current), int(max_health)]
     var string_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
@@ -61,12 +104,12 @@ func _draw() -> void:
 
 func set_health(value: float) -> void:
     var new_value: float = clamp(value, 0.0, max_health)
-    var delta: float = new_value - _current
-    if is_zero_approx(delta):
+    var delta_val: float = new_value - _current
+    if is_zero_approx(delta_val):
         return
 
     _current = new_value
-    _emit_changed(delta)
+    _emit_changed(delta_val)
 
     if is_zero_approx(_current):
         _handle_death()

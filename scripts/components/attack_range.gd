@@ -51,6 +51,9 @@ func _on_body_entered(body: Node2D) -> void:
 	if body == get_parent() or body is not CharacterBody2D:
 		return
 	var unit := body as CharacterBody2D
+	# 同阵营单位不作为目标
+	if _is_same_team(unit):
+		return
 	if unit in targets:
 		return
 	targets.append(unit)
@@ -65,6 +68,16 @@ func _on_body_exited(body: Node2D) -> void:
 	if body is not CharacterBody2D:
 		return
 	_unregister(body as CharacterBody2D)
+
+# ─── 阵营判断（私有） ────────────────────────────────────
+
+## 判断目标是否与自身属于同一阵营（共享任意用户分组即视为同队）。
+func _is_same_team(body: CharacterBody2D) -> bool:
+	var owner_node := get_parent()
+	for group in owner_node.get_groups():
+		if body.is_in_group(group):
+			return true
+	return false
 
 # ─── 目标管理（私有） ────────────────────────────────────
 

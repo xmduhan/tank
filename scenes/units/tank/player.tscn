@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://b5e58720b0nfw" path="res://scenes/units/tank/base.tscn" id="1_r64ib"]
 [ext_resource type="Script" uid="uid://dien1j7s76us6" path="res://scenes/units/tank/controller.gd" id="2_xu2sa"]
 
-[node name="Player" unique_id=827860858 instance=ExtResource("1_r64ib")]
+[node name="Player" unique_id=827860858 instance=ExtResource("1_r64ib") groups=["player"]]
 
 [node name="controller" type="Node" parent="." index="5" unique_id=1750931885]
 script = ExtResource("2_xu2sa")

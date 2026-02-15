@@ -38,4 +38,5 @@ script = ExtResource("5_health")
 show_seconds = 10.0
 bar_size = Vector2(80, 6)
 bar_offset = Vector2(-40, 10)
+bar_position_offset = Vector2(0, -60)
 bg_color = Color(0.4, 0, 0, 0.54901963)

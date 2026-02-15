@@ -16,7 +16,7 @@ signal died()
 @export_group("Bar")
 @export var bar_size: Vector2 = Vector2(80, 6)
 @export var bar_offset: Vector2 = Vector2(-40, 10)
-@export var bar_position_offset: Vector2 = Vector2(0, -50)
+@export var bar_position_offset: Vector2 = Vector2(0, -60)
 @export var bg_color: Color = Color(0.4, 0, 0, 0.549)
 @export var bar_color: Color = Color(0.2, 0.8, 0.2, 0.8)
 @export var damage_color: Color = Color(0.9, 0.6, 0.1, 0.8)
@@ -68,6 +68,23 @@ func _draw() -> void:
 
 # ─── Bar Drawing ──────────────────────────────────────────
 
+## 根据当前血量比例动态计算血条颜色：满血绿色 → 半血黄色 → 空血红色
+func _get_health_color() -> Color:
+    var color_green := Color(0.2, 0.8, 0.2, 0.8)
+    var color_yellow := Color(0.9, 0.8, 0.2, 0.8)
+    var color_red := Color(0.9, 0.1, 0.1, 0.8)
+
+    var r := ratio
+    if r > 0.5:
+        # 满血→半血：绿色渐变到黄色
+        var t := (r - 0.5) / 0.5
+        return color_yellow.lerp(color_green, t)
+    else:
+        # 半血→空血：黄色渐变到红色
+        var t := r / 0.5
+        return color_red.lerp(color_yellow, t)
+
+
 func _draw_bar() -> void:
     # 1) 背景 — 空血底色
     draw_rect(Rect2(bar_offset, bar_size), bg_color)
@@ -78,10 +95,11 @@ func _draw_bar() -> void:
     if damage_width > 0.5:
         draw_rect(Rect2(bar_offset, Vector2(damage_width, bar_size.y)), damage_color)
 
-    # 3) 当前血量 — 绿色，即时反映真实血量
+    # 3) 当前血量 — 颜色随血量动态变化
     var health_width: float = bar_size.x * ratio
+    var current_color: Color = _get_health_color()
     if health_width > 0.5:
-        draw_rect(Rect2(bar_offset, Vector2(health_width, bar_size.y)), bar_color)
+        draw_rect(Rect2(bar_offset, Vector2(health_width, bar_size.y)), current_color)
 
     # 4) 边框
     draw_rect(Rect2(bar_offset, bar_size), Color(0, 0, 0, 0.6), false, 1.0)

@@ -2,16 +2,16 @@ extends Node2D
 
 signal arrived
 
-@export var width: float = 5.0
-@export var color: Color
+@export var width: float = 10.0
+@export var color: Color = Color(1.0, 0.98, 0.85, 1.0)
 
 ## 到达后淡出时间（更短 = 反馈更快）
 @export var fade_time: float = 0.04
 
-## 最短飞行时间：防止距离很近时“看不到”，但仍然非常快
+## 最短飞行时间：防止距离很近时"看不到"，但仍然非常快
 @export var min_flight_time: float = 0.02
 
-## 到达判定阈值：更早触发 arrived，让打击更“爽快”
+## 到达判定阈值：更早触发 arrived，让打击更"爽快"
 @export_range(0.0, 1.0, 0.01) var arrive_threshold: float = 0.92
 
 @export_group("Feel")
@@ -19,8 +19,8 @@ signal arrived
 @export_range(0.01, 1.0, 0.01) var trail_length_ratio: float = 0.18
 ## 尾迹的最小长度（像素），防止距离很近时完全看不见
 @export var min_trail_length: float = 22.0
-## 速度倍率（需求：加快 *2）
-@export var speed_multiplier: float = 2.0
+## 速度倍率（需求：加快 *4）
+@export var speed_multiplier: float = 4.0
 
 var _start: Vector2
 var _end: Vector2
@@ -95,13 +95,13 @@ func _process(delta: float) -> void:
 func _apply_style() -> void:
     _line.width = width
     if color.a <= 0.0 and color.r <= 0.0 and color.g <= 0.0 and color.b <= 0.0:
-        color = Color(1.0, 0.95, 0.7, 0.95)
+        color = Color(1.0, 0.98, 0.85, 1.0)
     _line.default_color = color
 
 
 func _update_line(head: Vector2) -> void:
     var full_dist := _start.distance_to(_end)
-    var tail_len :float = max(full_dist * trail_length_ratio, min_trail_length)
+    var tail_len: float = max(full_dist * trail_length_ratio, min_trail_length)
 
     var dir := head - _start
     var head_dist := dir.length()

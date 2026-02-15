@@ -7,6 +7,12 @@ signal target_changed(new_target: CharacterBody2D)
 @export_range(10.0, 100.0, 0.5) var marker_radius := 41.25
 @export_range(1.0, 10.0) var line_width := 6.0
 
+@export_group("Aim Line")
+@export var min_aim_width: float = 2.0
+@export var max_aim_width: float = 200.0
+@export var min_line_thickness: float = 1.5
+@export var max_line_thickness: float = 7.0
+
 var _targets: Array[CharacterBody2D] = []
 var _current: CharacterBody2D = null
 var _color: Color
@@ -95,7 +101,7 @@ func _draw_aim_line(target_pos: Vector2) -> void:
     var dist := target_pos.length()
     if dist < 10.0: return
 
-    # 使用更高的透明度（原色 alpha × 0.15），让瞄准线更淡
+    # 使用更高的透明度（原色 alpha × 0.4），让瞄准线更淡
     var aim_color := Color(_color.r, _color.g, _color.b, _color.a * 0.4)
 
     var dir := target_pos.normalized()
@@ -108,9 +114,19 @@ func _draw_aim_line(target_pos: Vector2) -> void:
         var t := (i + 1) * step
         if t > dist: break
 
+        # 根据箭头在瞄准线上的位置比例，线性插值展开宽度与线粗
+        var progress := t / dist
+
+        # V 形箭头的展开宽度随距离递增，末端可达 max_aim_width（200px）
+        var spread := lerpf(min_aim_width, max_aim_width, progress)
+        var half_spread := spread * 0.5
+
+        # 线条粗细也随距离递增
+        var w := lerpf(min_line_thickness, max_line_thickness, progress)
+
         var tip := dir * t
         var back := tip - dir * arrow_size
-        var side := dir.orthogonal() * (arrow_size * 0.5)
+        var side := dir.orthogonal() * half_spread
 
-        draw_line(back - side, tip, aim_color, 4.0)
-        draw_line(back + side, tip, aim_color, 4.0)
+        draw_line(back - side, tip, aim_color, w)
+        draw_line(back + side, tip, aim_color, w)

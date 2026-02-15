@@ -14,6 +14,14 @@ signal arrived
 ## 到达判定阈值：更早触发 arrived，让打击更“爽快”
 @export_range(0.0, 1.0, 0.01) var arrive_threshold: float = 0.92
 
+@export_group("Feel")
+## 尾迹长度占总距离的比例（越小 = 弹道越短）
+@export_range(0.01, 1.0, 0.01) var trail_length_ratio: float = 0.18
+## 尾迹的最小长度（像素），防止距离很近时完全看不见
+@export var min_trail_length: float = 22.0
+## 速度倍率（需求：加快 *2）
+@export var speed_multiplier: float = 2.0
+
 var _start: Vector2
 var _end: Vector2
 var _speed: float = 900.0
@@ -29,7 +37,7 @@ var _arrived_emitted: bool = false
 func setup(start_pos: Vector2, end_pos: Vector2, speed: float = 900.0) -> void:
     _start = start_pos
     _end = end_pos
-    _speed = max(speed, 1.0)
+    _speed = max(speed * speed_multiplier, 1.0)
 
     top_level = true
     global_position = Vector2.ZERO
@@ -92,8 +100,22 @@ func _apply_style() -> void:
 
 
 func _update_line(head: Vector2) -> void:
+    var full_dist := _start.distance_to(_end)
+    var tail_len :float = max(full_dist * trail_length_ratio, min_trail_length)
+
+    var dir := head - _start
+    var head_dist := dir.length()
+    if head_dist <= 0.001:
+        _line.clear_points()
+        _line.add_point(_start)
+        _line.add_point(_start)
+        return
+
+    var tail_start_dist: float = max(head_dist - tail_len, 0.0)
+    var tail = _start + dir.normalized() * tail_start_dist
+
     _line.clear_points()
-    _line.add_point(_start)
+    _line.add_point(tail)
     _line.add_point(head)
 
 

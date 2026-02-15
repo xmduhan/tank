@@ -37,5 +37,5 @@ shape = SubResource("CircleShape2D_arkgd")
 script = ExtResource("5_health")
 show_seconds = 10.0
 bar_size = Vector2(200, 200)
-bar_offset = Vector2(0, 0)
+bar_offset = Vector2(-100, 0)
 bg_color = Color(0.4, 0, 0, 0.54901963)

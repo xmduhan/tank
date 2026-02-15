@@ -1,78 +1,155 @@
 extends Area2D
+class_name AttackRangeComponent
+## 攻击范围组件：检测进入范围的敌方单位，维护目标列表，管理当前瞄准目标及视觉标记。
 
-var markers := {}
+## 当瞄准目标发生变化时发出（new_target 为 null 表示无目标）。
+signal target_changed(new_target: CharacterBody2D)
+
+## 范围内所有有效目标的有序列表。
 var targets: Array[CharacterBody2D] = []
-var current_target_index := -1
+## 当前瞄准的目标，可为 null。
 var current_target: CharacterBody2D = null
 
-func _ready():
+var _markers: Dictionary = {}          # { CharacterBody2D : RedCircleMarker }
+var _current_index: int = -1
+
+# ─── 生命周期 ─────────────────────────────────────────────
+
+func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 
-func _process(_delta):
-	# 持续重绘瞄准线（因为目标在移动）
+
+func _process(_delta: float) -> void:
+	_purge_invalid_targets()
 	queue_redraw()
 
-func _draw():
-	if current_target and is_instance_valid(current_target):
-		var target_local_pos = to_local(current_target.global_position)
-		# 画瞄准线：黄色，从自身原点（即父坦克位置）到目标
-		draw_line(Vector2.ZERO, target_local_pos, Color.YELLOW, 2.0)
-		# 在瞄准线终点画一个小十字准星
-		var cross_size := 10.0
-		draw_line(target_local_pos + Vector2(-cross_size, 0), target_local_pos + Vector2(cross_size, 0), Color.YELLOW, 2.0)
-		draw_line(target_local_pos + Vector2(0, -cross_size), target_local_pos + Vector2(0, cross_size), Color.YELLOW, 2.0)
 
-func _on_body_entered(body: Node2D):
-	if body == get_parent():
+func _draw() -> void:
+	if not is_instance_valid(current_target):
 		return
-	if body is CharacterBody2D and not markers.has(body):
-		var marker := RedCircleMarker.new()
-		body.add_child(marker)
-		markers[body] = marker
-		targets.append(body)
-		# 自动选中第一个进入范围的目标
-		if current_target == null:
-			_set_current_target(0)
+	var pos := to_local(current_target.global_position)
+	# 瞄准线
+	draw_line(Vector2.ZERO, pos, Color.YELLOW, 2.0)
+	# 十字准星
+	var half := 10.0
+	draw_line(pos + Vector2(-half, 0), pos + Vector2(half, 0), Color.YELLOW, 2.0)
+	draw_line(pos + Vector2(0, -half), pos + Vector2(0, half), Color.YELLOW, 2.0)
 
-func _on_body_exited(body: Node2D):
-	if markers.has(body):
-		var marker = markers[body]
-		if is_instance_valid(marker):
-			marker.queue_free()
-		markers.erase(body)
-		var idx = targets.find(body)
-		if idx != -1:
-			targets.remove_at(idx)
-			if body == current_target:
-				# 当前目标离开，自动切换
-				if targets.size() > 0:
-					_set_current_target(0)
-				else:
-					current_target_index = -1
+# ─── 公共接口 ─────────────────────────────────────────────
+
+## 切换到目标列表中的下一个单位（循环）。
+func cycle_target() -> void:
+	if targets.is_empty():
+		return
+	_current_index = (_current_index + 1) % targets.size()
+	_select_target(targets[_current_index])
+
+# ─── 信号回调 ─────────────────────────────────────────────
+
+func _on_body_entered(body: Node2D) -> void:
+	if body == get_parent() or body is not CharacterBody2D:
+		return
+	var unit := body as CharacterBody2D
+	if unit in targets:
+		return
+	targets.append(unit)
+	_attach_marker(unit)
+	# 自动选中第一个进入范围的目标
+	if current_target == null:
+		_current_index = 0
+		_select_target(unit)
+
+
+func _on_body_exited(body: Node2D) -> void:
+	if body is not CharacterBody2D:
+		return
+	_unregister(body as CharacterBody2D)
+
+# ─── 目标管理（私有） ────────────────────────────────────
+
+## 选中指定目标并更新高亮。
+func _select_target(target: CharacterBody2D) -> void:
+	if current_target == target:
+		return
+	_set_marker_highlight(current_target, false)
+	current_target = target
+	_set_marker_highlight(current_target, true)
+	target_changed.emit(current_target)
+
+
+## 清除当前目标。
+func _clear_target() -> void:
+	_set_marker_highlight(current_target, false)
+	current_target = null
+	_current_index = -1
+	target_changed.emit(null)
+
+
+## 将指定单位从目标列表中完全移除，并自动切换瞄准。
+func _unregister(body: CharacterBody2D) -> void:
+	_detach_marker(body)
+	var idx := targets.find(body)
+	if idx == -1:
+		return
+	var was_current := (body == current_target)
+	targets.remove_at(idx)
+	if was_current:
+		if targets.is_empty():
+			_clear_target()
+		else:
+			_current_index = mini(idx, targets.size() - 1)
+			_select_target(targets[_current_index])
+	elif _current_index > idx:
+		_current_index -= 1
+
+
+## 反向遍历清理已被销毁的目标引用（防御性维护）。
+func _purge_invalid_targets() -> void:
+	for i in range(targets.size() - 1, -1, -1):
+		if not is_instance_valid(targets[i]):
+			var stale := targets[i]
+			_markers.erase(stale)
+			var was_current := (stale == current_target)
+			targets.remove_at(i)
+			if was_current:
+				if targets.is_empty():
 					current_target = null
-			elif current_target_index > idx:
-				current_target_index -= 1
+					_current_index = -1
+					target_changed.emit(null)
+				else:
+					_current_index = mini(_current_index, targets.size() - 1)
+					current_target = targets[_current_index]
+					_set_marker_highlight(current_target, true)
+					target_changed.emit(current_target)
 
-func cycle_target():
-	if targets.size() == 0:
+# ─── 标记管理（私有） ────────────────────────────────────
+
+## 为指定单位添加红圈标记。
+func _attach_marker(body: CharacterBody2D) -> void:
+	if _markers.has(body):
 		return
-	var next_index = (current_target_index + 1) % targets.size()
-	_set_current_target(next_index)
+	var marker := RedCircleMarker.new()
+	body.add_child(marker)
+	_markers[body] = marker
 
-func _set_current_target(index: int):
-	# 取消旧目标高亮
-	if current_target and markers.has(current_target):
-		var old_marker = markers[current_target]
-		if is_instance_valid(old_marker):
-			old_marker.highlighted = false
-			old_marker.queue_redraw()
-	# 设置新目标
-	current_target_index = index
-	current_target = targets[index]
-	# 新目标高亮
-	if markers.has(current_target):
-		var new_marker = markers[current_target]
-		if is_instance_valid(new_marker):
-			new_marker.highlighted = true
-			new_marker.queue_redraw()
+
+## 移除指定单位的红圈标记。
+func _detach_marker(body: CharacterBody2D) -> void:
+	if not _markers.has(body):
+		return
+	var marker: Node2D = _markers[body]
+	if is_instance_valid(marker):
+		marker.queue_free()
+	_markers.erase(body)
+
+
+## 设置指定单位标记的高亮状态。
+func _set_marker_highlight(body: CharacterBody2D, value: bool) -> void:
+	if body == null or not _markers.has(body):
+		return
+	var marker: RedCircleMarker = _markers[body]
+	if not is_instance_valid(marker):
+		return
+	marker.highlighted = value
+	marker.queue_redraw()

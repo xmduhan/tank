@@ -25,4 +25,4 @@ func _physics_process(_delta: float) -> void:
 		direction.y += 1
 
 	# 防止斜向移动更快
-	move.direction = direction.normalized()
+	move.direction = direction

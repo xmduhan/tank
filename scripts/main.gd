@@ -2,6 +2,7 @@ extends Node2D
 
 func _ready():
 	spawn_enemy_tank(Vector2(570, 180))
+	spawn_enemy_tank(Vector2(570, 380))
 	spawn_player_tank(Vector2(200, 180))
 
 func spawn_enemy_tank(_position: Vector2):

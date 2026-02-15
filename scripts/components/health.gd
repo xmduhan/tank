@@ -1,6 +1,6 @@
 extends Node
 class_name HealthComponent
-## 血量组件：管理血量，并在宿主头顶显示血条（默认隐藏，血量变化后显示 show_seconds 秒）。
+## 血量组件：管理血量，并在宿主头顶显示血条（持续显示）。
 
 signal health_changed(current: float, max_value: float, delta: float)
 signal died()
@@ -12,7 +12,7 @@ signal died()
         _emit_changed(0.0)
         _sync_ui()
 
-@export var show_seconds: float = 3.0
+@export var show_seconds: float = 3.0 # 保留字段以兼容 Inspector，但不再用于自动隐藏
 
 # 血条外观参数（可按需在 Inspector 调）
 @export var bar_size := Vector2(90, 10)
@@ -46,7 +46,8 @@ func _ready() -> void:
 
     _ensure_ui()
     _sync_ui()
-    _set_bar_visible(false)
+    # 改为持续显示
+    _set_bar_visible(true)
 
 
 func _exit_tree() -> void:
@@ -98,12 +99,14 @@ func _emit_changed(delta: float) -> void:
 func _on_value_changed() -> void:
     _ensure_ui()
     _sync_ui()
-    _flash_bar(show_seconds)
+    # 持续显示：不再闪烁/隐藏
+    _set_bar_visible(true)
 
 
 func _ensure_ui() -> void:
     if not is_instance_valid(_bar):
         _create_bar()
+    # Timer 仍创建以兼容旧结构/热重载，但持续显示模式下不会再启动它
     if not is_instance_valid(_hide_timer):
         _create_timer()
 
@@ -111,16 +114,6 @@ func _ensure_ui() -> void:
 func _sync_ui() -> void:
     if is_instance_valid(_bar):
         _bar.set_ratio(ratio)
-
-
-func _flash_bar(seconds: float) -> void:
-    if not is_instance_valid(_bar):
-        return
-
-    _set_bar_visible(true)
-
-    if is_instance_valid(_hide_timer):
-        _hide_timer.start(max(seconds, 0.0))
 
 
 func _set_bar_visible(visible: bool) -> void:

@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://d4nvf55355psj" path="res://assets/images/units/tank/turret.png" id="2_7bmx0"]
 [ext_resource type="Script" uid="uid://cdllwedfbais2" path="res://scripts/components/move.gd" id="3_vatmn"]
 [ext_resource type="Script" uid="uid://csqx8op71ngdb" path="res://scripts/components/targeting.gd" id="4_arkgd"]
-[ext_resource type="Script" uid="uid://d2y3h1g5y7m3a" path="res://scripts/components/health.gd" id="5_health"]
+[ext_resource type="Script" uid="uid://caot20gsdpptm" path="res://scripts/components/health.gd" id="5_health"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ymsbx"]
 size = Vector2(110, 60)

@@ -95,12 +95,12 @@ func _draw_aim_line(target_pos: Vector2) -> void:
     var dist := target_pos.length()
     if dist < 10.0: return
 
-    # 使用更透明的颜色（原色 alpha × 0.4）
+    # 使用更高的透明度（原色 alpha × 0.15），让瞄准线更淡
     var aim_color := Color(_color.r, _color.g, _color.b, _color.a * 0.4)
 
     var dir := target_pos.normalized()
     var arrow_size := 8.0
-    var spacing := 18.0
+    var spacing := 20.0
     var step := arrow_size + spacing
     var num_arrows := int(dist / step)
 
@@ -112,5 +112,5 @@ func _draw_aim_line(target_pos: Vector2) -> void:
         var back := tip - dir * arrow_size
         var side := dir.orthogonal() * (arrow_size * 0.5)
 
-        draw_line(back - side, tip, aim_color, 3.0)
-        draw_line(back + side, tip, aim_color, 3.0)
+        draw_line(back - side, tip, aim_color, 4.0)
+        draw_line(back + side, tip, aim_color, 4.0)

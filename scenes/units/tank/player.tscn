@@ -5,5 +5,5 @@
 
 [node name="Player" unique_id=827860858 instance=ExtResource("1_r64ib")]
 
-[node name="keyboard" type="Node" parent="." index="4" unique_id=1750931885]
+[node name="controller" type="Node" parent="." index="4" unique_id=1750931885]
 script = ExtResource("2_xu2sa")

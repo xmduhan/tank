@@ -1,5 +1,5 @@
 extends Area2D
-class_name AttackRangeComponent
+class_name TargetingComponent
 ## 攻击范围组件：检测敌方单位，管理目标列表与瞄准，统一绘制视觉标记。
 
 signal target_changed(new_target: CharacterBody2D)

@@ -29,7 +29,7 @@ func _draw() -> void:
     for t in _targets:
         var pos := to_local(t.global_position)
         draw_arc(pos, marker_radius, 0, TAU, 64, _color, line_width)
-        
+
         if t == aimed:
             _draw_cross(pos)
             _draw_aim_line(pos)
@@ -94,20 +94,23 @@ func _draw_cross(pos: Vector2) -> void:
 func _draw_aim_line(target_pos: Vector2) -> void:
     var dist := target_pos.length()
     if dist < 10.0: return
-    
+
+    # 使用更透明的颜色（原色 alpha × 0.4）
+    var aim_color := Color(_color.r, _color.g, _color.b, _color.a * 0.4)
+
     var dir := target_pos.normalized()
     var arrow_size := 8.0
-    var spacing := 6.0
+    var spacing := 18.0
     var step := arrow_size + spacing
     var num_arrows := int(dist / step)
 
     for i in range(num_arrows):
         var t := (i + 1) * step
         if t > dist: break
-        
+
         var tip := dir * t
         var back := tip - dir * arrow_size
         var side := dir.orthogonal() * (arrow_size * 0.5)
-        
-        draw_line(back - side, tip, _color, 4.0)
-        draw_line(back + side, tip, _color, 4.0)
+
+        draw_line(back - side, tip, aim_color, 3.0)
+        draw_line(back + side, tip, aim_color, 3.0)

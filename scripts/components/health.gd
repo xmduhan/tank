@@ -58,8 +58,8 @@ func _exit_tree() -> void:
 # ─── Public API ───────────────────────────────────────────
 
 func set_health(value: float) -> void:
-    var new_value := clamp(value, 0.0, max_health)
-    var delta := new_value - _current
+    var new_value: float = clamp(value, 0.0, max_health)
+    var delta: float = new_value - _current
     if is_zero_approx(delta):
         return
 

@@ -3,9 +3,13 @@
 [ext_resource type="Texture2D" uid="uid://dsy8ok5xdu1dj" path="res://assets/images/units/tank/body.png" id="1_ymsbx"]
 [ext_resource type="Texture2D" uid="uid://d4nvf55355psj" path="res://assets/images/units/tank/turret.png" id="2_7bmx0"]
 [ext_resource type="Script" uid="uid://cdllwedfbais2" path="res://scripts/components/movable.gd" id="3_vatmn"]
+[ext_resource type="Script" path="res://scripts/components/attack_range.gd" id="4_arkgd"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ymsbx"]
 size = Vector2(110, 60)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_arkgd"]
+radius = 200.0
 
 [node name="Base" type="CharacterBody2D" unique_id=1950633393]
 
@@ -21,3 +25,9 @@ shape = SubResource("RectangleShape2D_ymsbx")
 
 [node name="movable" type="Node" parent="." unique_id=179272578]
 script = ExtResource("3_vatmn")
+
+[node name="attack_range" type="Area2D" parent="."]
+script = ExtResource("4_arkgd")
+
+[node name="range_shape" type="CollisionShape2D" parent="attack_range"]
+shape = SubResource("CircleShape2D_arkgd")

@@ -46,7 +46,7 @@ func _ready() -> void:
 
     _ensure_ui()
     _sync_ui()
-    # 改为持续显示
+    # 持续显示：进入场景就显示血条
     _set_bar_visible(true)
 
 
@@ -100,7 +100,7 @@ func _emit_changed(delta: float) -> void:
 func _on_value_changed() -> void:
     _ensure_ui()
     _sync_ui()
-    # 持续显示：不再闪烁/隐藏
+    # 持续显示：不再闪烁/隐藏，也不再启动计时器
     _set_bar_visible(true)
 
 

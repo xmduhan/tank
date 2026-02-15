@@ -7,6 +7,7 @@ signal target_changed(new_target: CharacterBody2D)
 
 var _targets: Array[CharacterBody2D] = []
 var _current: CharacterBody2D = null
+var _color: Color = Color.RED # 默认红色(玩家)
 
 ## 当前瞄准目标（只读；失效时返回 null）。
 var current_target: CharacterBody2D:
@@ -21,6 +22,12 @@ var targets: Array[CharacterBody2D]:
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
+	# 设置绘制层级低于对象，避免覆盖
+	z_index = -1 
+	# 根据父节点分组确定颜色：玩家(红) / 敌人(蓝)
+	var parent := get_parent()
+	if parent and parent.is_in_group("enemy"):
+		_color = Color.BLUE
 
 func _process(_delta: float) -> void:
 	_purge_invalid()
@@ -30,10 +37,16 @@ func _draw() -> void:
 	var aimed := current_target
 	for t in _targets:
 		var pos := to_local(t.global_position)
+		# 绘制标记圆圈 (半径调整为 55 * 0.75 = 41.25)
+		draw_arc(pos, 41.25, 0, TAU, 64, _color, 2.0)
+		
 		if t == aimed:
-			_draw_crosshair(pos)
-		else:
-			draw_arc(pos, 40, 0, TAU, 64, Color.RED, 2.0)
+			# 绘制瞄准线
+			_draw_aim_line(pos)
+			# 绘制准心十字
+			var h := 10.0
+			draw_line(pos - Vector2(h, 0), pos + Vector2(h, 0), _color, 2.0)
+			draw_line(pos - Vector2(0, h), pos + Vector2(0, h), _color, 2.0)
 
 # ─── 公共接口 ──────────────────────────────────────────────
 
@@ -97,9 +110,31 @@ func _nearest() -> CharacterBody2D:
 		return a if o.distance_squared_to(a.global_position) <= o.distance_squared_to(b.global_position) else b
 	)
 
-func _draw_crosshair(pos: Vector2) -> void:
-	var h := 10.0
-	draw_line(Vector2.ZERO, pos, Color.YELLOW, 2.0)
-	draw_line(pos - Vector2(h, 0), pos + Vector2(h, 0), Color.YELLOW, 2.0)
-	draw_line(pos - Vector2(0, h), pos + Vector2(0, h), Color.YELLOW, 2.0)
-	draw_arc(pos, 40, 0, TAU, 64, Color.YELLOW, 3.0)
+## 绘制 ">>>>>>>>" 样式的瞄准线
+func _draw_aim_line(target_pos: Vector2) -> void:
+	var dist := target_pos.length()
+	if dist < 10.0:
+		return
+		
+	var dir := target_pos.normalized()
+	# 箭头符号参数
+	var arrow_char := ">"
+	var arrow_size := 8.0
+	var spacing := 6.0
+	var step := arrow_size + spacing
+	var num_arrows := int(dist / step)
+	
+	# 绘制箭头串 (线条宽度调整为 4.0)
+	for i in range(num_arrows):
+		var t := (i + 1) * step
+		if t > dist:
+			break
+		var p := dir * t
+		# 绘制 ">" 形状：两条线段组成 V 形，开口朝向目标
+		# 箭头尖端指向目标方向
+		var tip := p 
+		var back := p - dir * arrow_size
+		var side_offset := dir.orthogonal() * (arrow_size * 0.5)
+		
+		draw_line(back - side_offset, tip, _color, 4.0)
+		draw_line(back + side_offset, tip, _color, 4.0)

@@ -1,0 +1,14 @@
+[gd_scene format=3 load_steps=2 uid="uid://d0b7j2m1s9q0p"]
+
+[sub_resource type="GDScript" id="GDScript_1"]
+script/source = "extends Node2D\n\nsignal arrived\n\n@export var width: float = 4.0\n@export var color: Color = Color(1.0, 0.9, 0.5, 0.9)\n@export var fade_time: float = 0.08\n\nvar _start: Vector2\nvar _end: Vector2\nvar _speed: float = 900.0\nvar _t: float = 0.0\nvar _fading: bool = false\n\n@onready var _line: Line2D = $Line\n\n\nfunc setup(start_pos: Vector2, end_pos: Vector2, speed: float = 900.0) -> void:\n    _start = start_pos\n    _end = end_pos\n    _speed = max(speed, 1.0)\n\n    top_level = true\n    global_position = Vector2.ZERO\n\n    _apply_style()\n    _update_line(_start)\n\n\nfunc _ready() -> void:\n    if _start == Vector2.ZERO and _end == Vector2.ZERO:\n        _start = global_position\n        _end = global_position\n    _apply_style()\n\n\nfunc _process(delta: float) -> void:\n    if _fading:\n        var c := _line.default_color\n        c.a = max(c.a - delta / max(fade_time, 0.001), 0.0)\n        _line.default_color = c\n        if c.a <= 0.01:\n            queue_free()\n        return\n\n    var dist := _start.distance_to(_end)\n    if dist <= 0.001:\n        _arrive()\n        return\n\n    _t += (_speed * delta) / dist\n    if _t >= 1.0:\n        _t = 1.0\n\n    var head := _start.lerp(_end, _t)\n    _update_line(head)\n\n    if is_equal_approx(_t, 1.0):\n        _arrive()\n\n\nfunc _apply_style() -> void:\n    if _line == null:\n        return\n    _line.width = width\n    _line.default_color = color\n\n\nfunc _update_line(head: Vector2) -> void:\n    if _line == null:\n        return\n    _line.clear_points()\n    _line.add_point(_start)\n    _line.add_point(head)\n\n\nfunc _arrive() -> void:\n    arrived.emit()\n    _fading = true\n"
+
+[node name="BulletTrail" type="Node2D"]
+
+[node name="Line" type="Line2D" parent="."]
+width = 4.0
+default_color = Color(1, 0.9, 0.5, 0.9)
+points = PackedVector2Array(0, 0, 0, 0)
+
+[node name="Script" type="Node" parent="."]
+script = SubResource(\"GDScript_1\")

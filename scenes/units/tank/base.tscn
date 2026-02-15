@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://cdllwedfbais2" path="res://scripts/components/move.gd" id="3_vatmn"]
 [ext_resource type="Script" uid="uid://csqx8op71ngdb" path="res://scripts/components/targeting.gd" id="4_arkgd"]
 [ext_resource type="Script" uid="uid://caot20gsdpptm" path="res://scripts/components/health.gd" id="5_health"]
+[ext_resource type="Script" path="res://scripts/components/shoot.gd" id="6_shoot"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ymsbx"]
 size = Vector2(110, 60)
@@ -40,3 +41,10 @@ bar_size = Vector2(80, 6)
 bar_offset = Vector2(-40, 10)
 bar_position_offset = Vector2(0, -65)
 bg_color = Color(0.4, 0, 0, 0.54901963)
+
+[node name="shoot" type="Node" parent="." unique_id=321987654]
+script = ExtResource("6_shoot")
+turret_path = NodePath("../turret")
+muzzle_offset = Vector2(55, 0)
+damage = 35.0
+bullet_speed = 900.0

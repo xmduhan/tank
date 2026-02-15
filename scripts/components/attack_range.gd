@@ -7,13 +7,12 @@ signal target_changed(new_target: CharacterBody2D)
 
 var _targets: Array[CharacterBody2D] = []
 var _current_target: CharacterBody2D = null
-var _current_index: int = -1
 
-## 当前瞄准目标（只读，自动校验有效性）。
+## 当前瞄准目标（只读；失效时自动返回 null）。
 var current_target: CharacterBody2D:
-	get: return _get_current_target()
+	get: return _current_target if is_instance_valid(_current_target) else null
 
-## 范围内所有有效目标的有序列表（只读）。
+## 范围内所有有效目标（只读）。
 var targets: Array[CharacterBody2D]:
 	get: return _targets
 
@@ -30,117 +29,87 @@ func _process(_delta: float) -> void:
 
 
 func _draw() -> void:
-	var aimed := _get_current_target()
+	var aimed := current_target
 	for t in _targets:
-		if not is_instance_valid(t):
-			continue
 		var pos := to_local(t.global_position)
 		if t == aimed:
-			# 瞄准线
-			draw_line(Vector2.ZERO, pos, Color.YELLOW, 2.0)
-			# 十字准星
-			var half := 10.0
-			draw_line(pos + Vector2(-half, 0), pos + Vector2(half, 0), Color.YELLOW, 2.0)
-			draw_line(pos + Vector2(0, -half), pos + Vector2(0, half), Color.YELLOW, 2.0)
-			# 当前目标：黄色粗圈
-			draw_arc(pos, 40, 0, TAU, 64, Color.YELLOW, 3.0)
+			_draw_crosshair(pos)
 		else:
-			# 范围内非瞄准目标：红色圈
 			draw_arc(pos, 40, 0, TAU, 64, Color.RED, 2.0)
 
 # ─── 公共接口 ─────────────────────────────────────────────
 
-## 获取当前瞄准目标，自动校验有效性；失效时触发清理并返回新目标或 null。
-func _get_current_target() -> CharacterBody2D:
-	if _current_target != null and not is_instance_valid(_current_target):
-		_current_target = null
-		_purge_invalid()
-	return _current_target
-
-
 ## 切换到目标列表中的下一个单位（循环）。
+## find 未命中返回 -1，(−1+1)%size = 0，自然回退到首个目标。
 func cycle_target() -> void:
 	if _targets.is_empty():
 		return
-	_current_index = (_current_index + 1) % _targets.size()
-	_select_target(_targets[_current_index])
+	var idx := (_targets.find(_current_target) + 1) % _targets.size()
+	_set_target(_targets[idx])
 
 # ─── 信号回调 ─────────────────────────────────────────────
 
 func _on_body_entered(body: Node2D) -> void:
-	if body == get_parent() or body is not CharacterBody2D:
-		return
-	var unit := body as CharacterBody2D
-	if _is_same_team(unit):
-		return
-	if unit in _targets:
+	var unit := _as_enemy(body)
+	if unit == null or unit in _targets:
 		return
 	_targets.append(unit)
-	# 自动选中第一个进入范围的目标
-	if _get_current_target() == null:
-		_current_index = 0
-		_select_target(unit)
+	if current_target == null:
+		_set_target(unit)
 
 
 func _on_body_exited(body: Node2D) -> void:
-	if body is not CharacterBody2D:
-		return
-	_unregister(body as CharacterBody2D)
+	if body is CharacterBody2D:
+		_remove_target(body as CharacterBody2D)
 
-# ─── 阵营判断（私有） ────────────────────────────────────
+# ─── 内部逻辑 ─────────────────────────────────────────────
 
-func _is_same_team(body: CharacterBody2D) -> bool:
-	var owner_node := get_parent()
-	for group in owner_node.get_groups():
-		if body.is_in_group(group):
-			return true
-	return false
+## 校验 body：非自身、是 CharacterBody2D、非友方时返回该单位，否则 null。
+func _as_enemy(body: Node2D) -> CharacterBody2D:
+	if body == get_parent() or body is not CharacterBody2D:
+		return null
+	var unit := body as CharacterBody2D
+	if get_parent().get_groups().any(func(g): return unit.is_in_group(g)):
+		return null
+	return unit
 
-# ─── 目标管理（私有） ────────────────────────────────────
 
-func _select_target(target: CharacterBody2D) -> void:
+func _set_target(target: CharacterBody2D) -> void:
 	if _current_target == target:
 		return
 	_current_target = target
-	target_changed.emit(_current_target)
+	target_changed.emit(target)
 
 
-func _clear_target() -> void:
-	_current_target = null
-	_current_index = -1
-	target_changed.emit(null)
-
-
-func _unregister(body: CharacterBody2D) -> void:
-	var idx := _targets.find(body)
-	if idx == -1:
+func _remove_target(body: CharacterBody2D) -> void:
+	if body not in _targets:
 		return
-	var was_current := (body == _current_target)
-	_targets.remove_at(idx)
-	if was_current:
-		_auto_select_nearest(idx)
-	elif _current_index > idx:
-		_current_index -= 1
+	var was_aimed := body == _current_target
+	_targets.erase(body)
+	if was_aimed:
+		_set_target(_nearest_target())
 
 
 func _purge_invalid() -> void:
-	var lost_current := false
-	for i in range(_targets.size() - 1, -1, -1):
-		if not is_instance_valid(_targets[i]):
-			if _targets[i] == _current_target:
-				lost_current = true
-			_targets.remove_at(i)
-	if lost_current:
+	var had_target := _current_target != null
+	_targets.assign(_targets.filter(func(t): return is_instance_valid(t)))
+	if had_target and not is_instance_valid(_current_target):
 		_current_target = null
-		_auto_select_nearest(_current_index)
-	elif _current_target != null:
-		_current_index = _targets.find(_current_target)
+		_set_target(_nearest_target())
 
 
-func _auto_select_nearest(hint_idx: int) -> void:
+func _nearest_target() -> CharacterBody2D:
 	if _targets.is_empty():
-		_clear_target()
-	else:
-		_current_index = clampi(hint_idx, 0, _targets.size() - 1)
-		_current_target = null
-		_select_target(_targets[_current_index])
+		return null
+	var origin := global_position
+	return _targets.reduce(func(a, b):
+		return a if origin.distance_squared_to(a.global_position) <= origin.distance_squared_to(b.global_position) else b
+	)
+
+
+func _draw_crosshair(pos: Vector2) -> void:
+	draw_line(Vector2.ZERO, pos, Color.YELLOW, 2.0)
+	var h := 10.0
+	draw_line(pos + Vector2(-h, 0), pos + Vector2(h, 0), Color.YELLOW, 2.0)
+	draw_line(pos + Vector2(0, -h), pos + Vector2(0, h), Color.YELLOW, 2.0)
+	draw_arc(pos, 40, 0, TAU, 64, Color.YELLOW, 3.0)

@@ -16,15 +16,11 @@ signal died()
 @export_group("Bar")
 @export var bar_size: Vector2 = Vector2(80, 6)
 @export var bar_offset: Vector2 = Vector2(-40, 10)
+@export var bar_position_offset: Vector2 = Vector2(0, -50)
 @export var bg_color: Color = Color(0.4, 0, 0, 0.549)
 @export var bar_color: Color = Color(0.2, 0.8, 0.2, 0.8)
 @export var damage_color: Color = Color(0.9, 0.6, 0.1, 0.8)
 @export var damage_lerp_speed: float = 2.0
-
-@export_group("Text")
-@export var text_offset: Vector2 = Vector2(0, -50)
-@export var font_size: int = 16
-@export var font_color: Color = Color.WHITE
 
 var _current: float = 100.0
 var _display_health: float = 100.0
@@ -53,7 +49,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
     if is_instance_valid(_host):
-        global_position = _host.global_position + text_offset
+        global_position = _host.global_position + bar_position_offset
 
     # 平滑动画：损耗缓慢下降，治疗立即跟上
     if _display_health > _current:
@@ -68,7 +64,6 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
     _draw_bar()
-    _draw_text()
 
 
 # ─── Bar Drawing ──────────────────────────────────────────
@@ -90,14 +85,6 @@ func _draw_bar() -> void:
 
     # 4) 边框
     draw_rect(Rect2(bar_offset, bar_size), Color(0, 0, 0, 0.6), false, 1.0)
-
-
-func _draw_text() -> void:
-    var font := ThemeDB.fallback_font
-    var text := "%d / %d" % [int(_current), int(max_health)]
-    var string_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
-    var pos := Vector2(-string_size.x / 2.0, string_size.y / 2.0)
-    draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, font_color)
 
 
 # ─── Public API ───────────────────────────────────────────

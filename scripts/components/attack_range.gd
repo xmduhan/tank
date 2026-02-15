@@ -24,10 +24,13 @@ func _ready() -> void:
 	body_exited.connect(_on_body_exited)
 	# 设置绘制层级低于对象，避免覆盖
 	z_index = -1 
-	# 根据父节点分组确定颜色：玩家(红) / 敌人(蓝)
+	# 根据父节点分组确定颜色：玩家(浅红) / 敌人(浅蓝)
+	# 使用较浅的颜色并增加透明度
 	var parent := get_parent()
 	if parent and parent.is_in_group("enemy"):
-		_color = Color.BLUE
+		_color = Color(0.4, 0.6, 1.0, 0.6) # 浅蓝色，透明度0.6
+	else:
+		_color = Color(1.0, 0.4, 0.4, 0.6) # 浅红色，透明度0.6
 
 func _process(_delta: float) -> void:
 	_purge_invalid()
@@ -38,7 +41,8 @@ func _draw() -> void:
 	for t in _targets:
 		var pos := to_local(t.global_position)
 		# 绘制标记圆圈 (半径调整为 55 * 0.75 = 41.25)
-		draw_arc(pos, 41.25, 0, TAU, 64, _color, 2.0)
+		# 线条粗细调整为原来的3倍: 2.0 -> 6.0
+		draw_arc(pos, 41.25, 0, TAU, 64, _color, 6.0)
 		
 		if t == aimed:
 			# 绘制瞄准线

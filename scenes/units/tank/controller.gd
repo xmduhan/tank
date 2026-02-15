@@ -24,18 +24,18 @@ func _physics_process(_delta: float) -> void:
 
 ## 采集 WASD 输入并返回归一化后的方向向量，防止斜向移动速度大于轴向。
 func _get_movement_direction() -> Vector2:
-	var raw := Vector2.ZERO
+	var direction := Vector2.ZERO
 
 	if Input.is_key_pressed(KEY_A):
-		raw.x -= 1.0
+		direction.x -= 1
 	if Input.is_key_pressed(KEY_D):
-		raw.x += 1.0
+		direction.x += 1
 	if Input.is_key_pressed(KEY_W):
-		raw.y -= 1.0
+		direction.y -= 1
 	if Input.is_key_pressed(KEY_S):
-		raw.y += 1.0
+		direction.y += 1
 
-	return raw.normalized() if raw != Vector2.ZERO else Vector2.ZERO
+	return direction
 
 
 ## 安全地请求攻击范围组件切换瞄准目标。

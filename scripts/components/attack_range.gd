@@ -6,8 +6,12 @@ class_name AttackRangeComponent
 signal target_changed(new_target: CharacterBody2D)
 
 var _targets: Array[CharacterBody2D] = []
-var current_target: CharacterBody2D = null
+var _current_target: CharacterBody2D = null
 var _current_index: int = -1
+
+## 当前瞄准目标（只读，自动校验有效性）。
+var current_target: CharacterBody2D:
+	get: return _get_current_target()
 
 ## 范围内所有有效目标的有序列表（只读）。
 var targets: Array[CharacterBody2D]:
@@ -26,11 +30,12 @@ func _process(_delta: float) -> void:
 
 
 func _draw() -> void:
+	var aimed := _get_current_target()
 	for t in _targets:
 		if not is_instance_valid(t):
 			continue
 		var pos := to_local(t.global_position)
-		if t == current_target:
+		if t == aimed:
 			# 瞄准线
 			draw_line(Vector2.ZERO, pos, Color.YELLOW, 2.0)
 			# 十字准星
@@ -44,6 +49,14 @@ func _draw() -> void:
 			draw_arc(pos, 40, 0, TAU, 64, Color.RED, 2.0)
 
 # ─── 公共接口 ─────────────────────────────────────────────
+
+## 获取当前瞄准目标，自动校验有效性；失效时触发清理并返回新目标或 null。
+func _get_current_target() -> CharacterBody2D:
+	if _current_target != null and not is_instance_valid(_current_target):
+		_current_target = null
+		_purge_invalid()
+	return _current_target
+
 
 ## 切换到目标列表中的下一个单位（循环）。
 func cycle_target() -> void:
@@ -64,7 +77,7 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	_targets.append(unit)
 	# 自动选中第一个进入范围的目标
-	if current_target == null:
+	if _get_current_target() == null:
 		_current_index = 0
 		_select_target(unit)
 
@@ -86,14 +99,14 @@ func _is_same_team(body: CharacterBody2D) -> bool:
 # ─── 目标管理（私有） ────────────────────────────────────
 
 func _select_target(target: CharacterBody2D) -> void:
-	if current_target == target:
+	if _current_target == target:
 		return
-	current_target = target
-	target_changed.emit(current_target)
+	_current_target = target
+	target_changed.emit(_current_target)
 
 
 func _clear_target() -> void:
-	current_target = null
+	_current_target = null
 	_current_index = -1
 	target_changed.emit(null)
 
@@ -102,7 +115,7 @@ func _unregister(body: CharacterBody2D) -> void:
 	var idx := _targets.find(body)
 	if idx == -1:
 		return
-	var was_current := (body == current_target)
+	var was_current := (body == _current_target)
 	_targets.remove_at(idx)
 	if was_current:
 		_auto_select_nearest(idx)
@@ -114,13 +127,14 @@ func _purge_invalid() -> void:
 	var lost_current := false
 	for i in range(_targets.size() - 1, -1, -1):
 		if not is_instance_valid(_targets[i]):
-			if _targets[i] == current_target:
+			if _targets[i] == _current_target:
 				lost_current = true
 			_targets.remove_at(i)
 	if lost_current:
+		_current_target = null
 		_auto_select_nearest(_current_index)
-	elif current_target != null:
-		_current_index = _targets.find(current_target)
+	elif _current_target != null:
+		_current_index = _targets.find(_current_target)
 
 
 func _auto_select_nearest(hint_idx: int) -> void:
@@ -128,5 +142,5 @@ func _auto_select_nearest(hint_idx: int) -> void:
 		_clear_target()
 	else:
 		_current_index = clampi(hint_idx, 0, _targets.size() - 1)
-		current_target = null
+		_current_target = null
 		_select_target(_targets[_current_index])

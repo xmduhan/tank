@@ -95,33 +95,32 @@ func _unregister(body: CharacterBody2D) -> void:
 	var was_current := (body == current_target)
 	targets.remove_at(idx)
 	if was_current:
-		if targets.is_empty():
-			_clear_target()
-		else:
-			_current_index = mini(idx, targets.size() - 1)
-			_select_target(targets[_current_index])
+		_auto_select_nearest(idx)
 	elif _current_index > idx:
 		_current_index -= 1
 
 
 ## 反向遍历清理已被销毁的目标引用（防御性维护）。
 func _purge_invalid_targets() -> void:
+	var lost_current := false
 	for i in range(targets.size() - 1, -1, -1):
 		if not is_instance_valid(targets[i]):
-			var stale := targets[i]
-			_markers.erase(stale)
-			var was_current := (stale == current_target)
+			_markers.erase(targets[i])
+			if targets[i] == current_target:
+				lost_current = true
 			targets.remove_at(i)
-			if was_current:
-				if targets.is_empty():
-					current_target = null
-					_current_index = -1
-					target_changed.emit(null)
-				else:
-					_current_index = mini(_current_index, targets.size() - 1)
-					current_target = targets[_current_index]
-					_set_marker_highlight(current_target, true)
-					target_changed.emit(current_target)
+	if lost_current:
+		_auto_select_nearest(_current_index)
+
+
+## 目标被移除后，根据 hint_idx 自动选中最近位置的目标，或清空瞄准。
+func _auto_select_nearest(hint_idx: int) -> void:
+	if targets.is_empty():
+		_clear_target()
+	else:
+		_current_index = clampi(hint_idx, 0, targets.size() - 1)
+		current_target = null          # 避免 _select_target 因相同引用而短路
+		_select_target(targets[_current_index])
 
 # ─── 标记管理（私有） ────────────────────────────────────
 

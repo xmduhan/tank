@@ -3,10 +3,12 @@ extends Node
 
 @onready var _move: MoveComponent = get_parent().get_node("movable") as MoveComponent
 @onready var _attack_range: Area2D = get_parent().get_node_or_null("attack_range")
+@onready var _shoot: ShootComponent = get_parent().get_node_or_null("shoot") as ShootComponent
 
 
 func _ready() -> void:
     assert(_move != null, "Controller: 未找到兄弟节点 'movable'(MoveComponent)。")
+    assert(_shoot != null, "Controller: 未找到兄弟节点 'shoot'(ShootComponent)。")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -17,7 +19,7 @@ func _unhandled_input(event: InputEvent) -> void:
         KEY_TAB:
             _try_cycle_target()
         KEY_SPACE:
-            _try_shoot_damage()
+            _try_shoot()
 
 
 func _physics_process(_delta: float) -> void:
@@ -46,25 +48,19 @@ func _try_cycle_target() -> void:
         _attack_range.cycle_target()
 
 
-## 按空格对当前锁定目标造成 1 点伤害
-func _try_shoot_damage() -> void:
-    if _attack_range == null:
+## 空格：对当前锁定目标执行一次射击（特效 + 到达后结算伤害）
+func _try_shoot() -> void:
+    if _attack_range == null or _shoot == null:
         return
 
-    # TargetingComponent 暴露了 current_target 属性（getter）
     var target: CharacterBody2D = null
     if "current_target" in _attack_range:
         target = _attack_range.get("current_target") as CharacterBody2D
     else:
-        # 兼容：若外部改了脚本但仍提供同名方法
         if _attack_range.has_method("get_current_target"):
             target = _attack_range.call("get_current_target") as CharacterBody2D
 
     if not is_instance_valid(target):
         return
 
-    var health: HealthComponent = target.get_node_or_null("health") as HealthComponent
-    if health == null:
-        return
-
-    health.damage(35.0)
+    _shoot.shoot(target)

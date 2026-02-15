@@ -1,19 +1,32 @@
-[gd_scene format=3 load_steps=2 uid="uid://c2hxp8v1x6v1q"]
+[gd_scene load_steps=3 format=3 uid="uid://c2hxp8v1x6v1q"]
 
-[sub_resource type="GDScript" id="GDScript_1"]
-script/source = "extends Node2D\n\n@onready var _p: GPUParticles2D = $Particles\n\nfunc _ready() -> void:\n    top_level = true\n    if _p:\n        _p.one_shot = true\n        _p.emitting = true\n\nfunc _process(_delta: float) -> void:\n    if _p and not _p.emitting:\n        queue_free()\n"
+[ext_resource type="Script" path="res://scenes/effects/hit_explosion.gd" id="1_hit_explosion_gd"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_1"]
+emission_shape = 1
+emission_sphere_radius = 2.0
+direction = Vector3(0, 0, 0)
+spread = 180.0
+gravity = Vector3(0, 0, 0)
+initial_velocity_min = 120.0
+initial_velocity_max = 260.0
+angular_velocity_min = -8.0
+angular_velocity_max = 8.0
+damping_min = 6.0
+damping_max = 10.0
+scale_min = 0.7
+scale_max = 1.2
+color = Color(1, 0.85, 0.3, 1)
 
 [node name="HitExplosion" type="Node2D"]
+script = ExtResource("1_hit_explosion_gd")
 
 [node name="Particles" type="GPUParticles2D" parent="."]
-amount = 36
-lifetime = 0.25
+amount = 42
+lifetime = 0.22
 one_shot = true
-explosiveness = 0.9
-randomness = 0.4
-emitting = true
-process_material = null
+explosiveness = 0.95
+randomness = 0.35
+emitting = false
+process_material = SubResource("ParticleProcessMaterial_1")
 draw_order = 1
-
-[node name="Script" type="Node" parent="."]
-script = SubResource(\"GDScript_1\")

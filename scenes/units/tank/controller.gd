@@ -1,28 +1,44 @@
 extends Node
+## 玩家坦克控制器，负责将输入转化为移动指令和技能操作。
 
-@onready var move: MoveComponent = get_parent().get_node_or_null("movable") as MoveComponent
-@onready var attack_range = get_parent().get_node_or_null("attack_range")
+@onready var _move: MoveComponent = get_parent().get_node("movable") as MoveComponent
+@onready var _attack_range: Area2D = get_parent().get_node_or_null("attack_range")
+
 
 func _ready() -> void:
-	assert(move != null)
+	assert(_move != null, "Controller: 未找到兄弟节点 'movable'(MoveComponent)。")
+
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Tab 键切换瞄准目标
-	if event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
-		if attack_range and attack_range.has_method("cycle_target"):
-			attack_range.cycle_target()
+	if not (event is InputEventKey and event.pressed):
+		return
+
+	match event.keycode:
+		KEY_TAB:
+			_try_cycle_target()
+
 
 func _physics_process(_delta: float) -> void:
-	var direction := Vector2.ZERO
+	_move.direction = _get_movement_direction()
+
+
+## 采集 WASD 输入并返回归一化后的方向向量，防止斜向移动速度大于轴向。
+func _get_movement_direction() -> Vector2:
+	var raw := Vector2.ZERO
 
 	if Input.is_key_pressed(KEY_A):
-		direction.x -= 1
+		raw.x -= 1.0
 	if Input.is_key_pressed(KEY_D):
-		direction.x += 1
+		raw.x += 1.0
 	if Input.is_key_pressed(KEY_W):
-		direction.y -= 1
+		raw.y -= 1.0
 	if Input.is_key_pressed(KEY_S):
-		direction.y += 1
+		raw.y += 1.0
 
-	# 防止斜向移动更快
-	move.direction = direction
+	return raw.normalized() if raw != Vector2.ZERO else Vector2.ZERO
+
+
+## 安全地请求攻击范围组件切换瞄准目标。
+func _try_cycle_target() -> void:
+	if _attack_range and _attack_range.has_method("cycle_target"):
+		_attack_range.cycle_target()

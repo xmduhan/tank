@@ -2,35 +2,23 @@ extends Area2D
 class_name AttackRangeComponent
 ## 攻击范围组件：检测敌方单位，管理目标列表与瞄准，统一绘制视觉标记。
 
-## 当瞄准目标发生变化时发出（new_target 为 null 表示无目标）。
 signal target_changed(new_target: CharacterBody2D)
+
+@export_range(10.0, 100.0, 0.5) var marker_radius := 41.25
+@export_range(1.0, 10.0) var line_width := 6.0
 
 var _targets: Array[CharacterBody2D] = []
 var _current: CharacterBody2D = null
-var _color: Color = Color.RED # 默认红色(玩家)
+var _color: Color
 
-## 当前瞄准目标（只读；失效时返回 null）。
 var current_target: CharacterBody2D:
 	get: return _current if is_instance_valid(_current) else null
-
-## 范围内所有有效目标（只读）。
-var targets: Array[CharacterBody2D]:
-	get: return _targets
-
-# ─── 生命周期 ──────────────────────────────────────────────
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
-	# 设置绘制层级低于对象，避免覆盖
-	z_index = -1 
-	# 根据父节点分组确定颜色：玩家(浅红) / 敌人(浅蓝)
-	# 使用较浅的颜色并增加透明度
-	var parent := get_parent()
-	if parent and parent.is_in_group("enemy"):
-		_color = Color(0.4, 0.6, 1.0, 0.6) # 浅蓝色，透明度0.6
-	else:
-		_color = Color(1.0, 0.4, 0.4, 0.6) # 浅红色，透明度0.6
+	z_index = -1
+	_setup_color()
 
 func _process(_delta: float) -> void:
 	_purge_invalid()
@@ -40,105 +28,86 @@ func _draw() -> void:
 	var aimed := current_target
 	for t in _targets:
 		var pos := to_local(t.global_position)
-		# 绘制标记圆圈 (半径调整为 55 * 0.75 = 41.25)
-		# 线条粗细调整为原来的3倍: 2.0 -> 6.0
-		draw_arc(pos, 41.25, 0, TAU, 64, _color, 6.0)
+		draw_arc(pos, marker_radius, 0, TAU, 64, _color, line_width)
 		
 		if t == aimed:
-			# 绘制瞄准线
+			_draw_cross(pos)
 			_draw_aim_line(pos)
-			# 绘制准心十字
-			var h := 10.0
-			draw_line(pos - Vector2(h, 0), pos + Vector2(h, 0), _color, 2.0)
-			draw_line(pos - Vector2(0, h), pos + Vector2(0, h), _color, 2.0)
 
 # ─── 公共接口 ──────────────────────────────────────────────
 
-## 循环切换到下一个目标。
-## find 未命中返回 -1，(-1+1)%size = 0，自然回退到首个目标。
 func cycle_target() -> void:
-	if _targets.is_empty():
-		return
-	_set_target(_targets[(_targets.find(_current) + 1) % _targets.size()])
+	if _targets.is_empty(): return
+	var idx := _targets.find(_current)
+	_set_target(_targets[(idx + 1) % _targets.size()])
 
-# ─── 内部 ─────────────────────────────────────────────────
+# ─── 内部逻辑 ─────────────────────────────────────────────
+
+func _setup_color() -> void:
+	var is_enemy := get_parent().is_in_group("enemy")
+	_color = Color(0.4, 0.6, 1.0, 0.6) if is_enemy else Color(1.0, 0.4, 0.4, 0.6)
 
 func _on_body_entered(body: Node2D) -> void:
-	var unit := _as_enemy(body)
-	if unit and unit not in _targets:
-		_targets.append(unit)
-		if not current_target:
-			_set_target(unit)
+	if _is_valid_unit(body) and body not in _targets:
+		_targets.append(body)
+		if not current_target: _set_target(body)
 
 func _on_body_exited(body: Node2D) -> void:
-	if body is CharacterBody2D:
-		_release(body as CharacterBody2D)
+	if body is CharacterBody2D: _release(body)
 
-## 判断 body 是否为敌方单位：非自身、是 CharacterBody2D、无共同分组。
-func _as_enemy(body: Node2D) -> CharacterBody2D:
-	if body == get_parent() or body is not CharacterBody2D:
-		return null
-	var unit := body as CharacterBody2D
-	if get_parent().get_groups().any(func(g): return unit.is_in_group(g)):
-		return null
-	return unit
+func _is_valid_unit(body: Node2D) -> bool:
+	if body == get_parent() or body is not CharacterBody2D: return false
+	# 检查是否属于同一阵营（任意分组重叠即视为友军）
+	var parent_groups := get_parent().get_groups()
+	return not parent_groups.any(func(g): return body.is_in_group(g))
 
 func _set_target(target: CharacterBody2D) -> void:
-	if _current == target:
-		return
+	if _current == target: return
 	_current = target
 	target_changed.emit(target)
 
-## 移除指定单位；若为当前瞄准则自动切换最近目标。
 func _release(unit: CharacterBody2D) -> void:
-	if unit not in _targets:
-		return
+	if unit not in _targets: return
 	var was_aimed := (unit == _current)
 	_targets.erase(unit)
-	if was_aimed:
-		_set_target(_nearest())
+	if was_aimed: _set_target(_nearest())
 
-## 移除已销毁的引用，必要时重新瞄准。
 func _purge_invalid() -> void:
 	var n := _targets.size()
-	_targets.assign(_targets.filter(func(t): return is_instance_valid(t)))
+	_targets.assign(_targets.filter(is_instance_valid))
 	if _targets.size() < n and not is_instance_valid(_current):
-		_current = null            # 清除旧引用，确保 _set_target 能检测到变化
+		_current = null
 		_set_target(_nearest())
 
 func _nearest() -> CharacterBody2D:
-	if _targets.is_empty():
-		return null
+	if _targets.is_empty(): return null
 	var o := global_position
 	return _targets.reduce(func(a, b):
 		return a if o.distance_squared_to(a.global_position) <= o.distance_squared_to(b.global_position) else b
 	)
 
-## 绘制 ">>>>>>>>" 样式的瞄准线
+func _draw_cross(pos: Vector2) -> void:
+	var h := 10.0
+	draw_line(pos - Vector2(h, 0), pos + Vector2(h, 0), _color, 2.0)
+	draw_line(pos - Vector2(0, h), pos + Vector2(0, h), _color, 2.0)
+
 func _draw_aim_line(target_pos: Vector2) -> void:
 	var dist := target_pos.length()
-	if dist < 10.0:
-		return
-		
+	if dist < 10.0: return
+	
 	var dir := target_pos.normalized()
-	# 箭头符号参数
-	var arrow_char := ">"
 	var arrow_size := 8.0
 	var spacing := 6.0
 	var step := arrow_size + spacing
 	var num_arrows := int(dist / step)
-	
-	# 绘制箭头串 (线条宽度调整为 4.0)
+
 	for i in range(num_arrows):
 		var t := (i + 1) * step
-		if t > dist:
-			break
-		var p := dir * t
-		# 绘制 ">" 形状：两条线段组成 V 形，开口朝向目标
-		# 箭头尖端指向目标方向
-		var tip := p 
-		var back := p - dir * arrow_size
-		var side_offset := dir.orthogonal() * (arrow_size * 0.5)
+		if t > dist: break
 		
-		draw_line(back - side_offset, tip, _color, 4.0)
-		draw_line(back + side_offset, tip, _color, 4.0)
+		var tip := dir * t
+		var back := tip - dir * arrow_size
+		var side := dir.orthogonal() * (arrow_size * 0.5)
+		
+		draw_line(back - side, tip, _color, 4.0)
+		draw_line(back + side, tip, _color, 4.0)

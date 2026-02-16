@@ -1,0 +1,45 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/math_prompt.gd" id="1_math_prompt_gd"]
+
+[node name="MathPrompt" type="CanvasLayer"]
+layer = 100
+script = ExtResource("1_math_prompt_gd")
+
+[node name="Panel" type="Panel" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -90.0
+offset_right = 220.0
+offset_bottom = 90.0
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Panel/VBox"]
+text = "答对才能开火"
+horizontal_alignment = 1
+
+[node name="Question" type="Label" parent="Panel/VBox"]
+text = "1 + 1 = ?"
+horizontal_alignment = 1
+
+[node name="Answer" type="LineEdit" parent="Panel/VBox"]
+placeholder_text = "输入答案后回车"
+caret_blink = true
+
+[node name="Hint" type="Label" parent="Panel/VBox"]
+text = "Esc 取消"
+horizontal_alignment = 1
+modulate = Color(1, 1, 1, 0.7)

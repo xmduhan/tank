@@ -2,8 +2,12 @@
 
 [ext_resource type="PackedScene" uid="uid://b5e58720b0nfw" path="res://scenes/units/tank/base.tscn" id="1_gc624"]
 [ext_resource type="Script" path="res://scripts/ai/enemy_ai_controller.gd" id="2_enemy_ai"]
+[ext_resource type="Script" path="res://scripts/components/ai_slowdown.gd" id="3_ai_slowdown"]
 
 [node name="Enemy" unique_id=229465187 groups=["enemy"] instance=ExtResource("1_gc624")]
 
 [node name="controller" type="Node" parent="." index="5"]
 script = ExtResource("2_enemy_ai")
+
+[node name="ai_slowdown" type="Node" parent="." index="6"]
+script = ExtResource("3_ai_slowdown")

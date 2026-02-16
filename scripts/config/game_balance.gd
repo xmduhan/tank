@@ -9,3 +9,6 @@ const ENEMY_MOVE_SPEED_MULT: float = 0.65
 
 ## 敌方开火/攻击冷却倍率（>1 更慢）
 const ENEMY_FIRE_COOLDOWN_MULT: float = 1.75
+
+## 敌人开局强制“梦游”时长（秒）
+const ENEMY_INITIAL_DREAM_SECONDS: float = 10.0

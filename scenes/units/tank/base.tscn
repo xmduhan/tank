@@ -5,12 +5,12 @@
 [ext_resource type="Script" uid="uid://cdllwedfbais2" path="res://scripts/components/move.gd" id="3_vatmn"]
 [ext_resource type="Script" uid="uid://csqx8op71ngdb" path="res://scripts/components/targeting.gd" id="4_arkgd"]
 [ext_resource type="Script" uid="uid://caot20gsdpptm" path="res://scripts/components/health.gd" id="5_health"]
-[ext_resource type="Script" path="res://scripts/components/shoot.gd" id="6_shoot"]
+[ext_resource type="Script" uid="uid://bhsudweft4lbs" path="res://scripts/components/shoot.gd" id="6_shoot"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ymsbx"]
 size = Vector2(110, 60)
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_arkgd"]
+[sub_resource type="CircleShape2D" id="CircleShape2D_kx2c7"]
 radius = 200.0
 
 [node name="Base" type="CharacterBody2D" unique_id=1950633393]
@@ -32,19 +32,13 @@ script = ExtResource("3_vatmn")
 script = ExtResource("4_arkgd")
 
 [node name="range_shape" type="CollisionShape2D" parent="attack_range" unique_id=271249326]
-shape = SubResource("CircleShape2D_arkgd")
+shape = SubResource("CircleShape2D_kx2c7")
 
 [node name="health" type="Node2D" parent="." unique_id=991234001]
 script = ExtResource("5_health")
-show_seconds = 10.0
-bar_size = Vector2(80, 6)
-bar_offset = Vector2(-40, 10)
 bar_position_offset = Vector2(0, -65)
 bg_color = Color(0.4, 0, 0, 0.54901963)
 
 [node name="shoot" type="Node" parent="." unique_id=321987654]
 script = ExtResource("6_shoot")
 turret_path = NodePath("../turret")
-muzzle_offset = Vector2(55, 0)
-damage = 35.0
-bullet_speed = 900.0

@@ -28,10 +28,10 @@ shape = SubResource("RectangleShape2D_ymsbx")
 [node name="movable" type="Node" parent="." unique_id=179272578]
 script = ExtResource("3_vatmn")
 
-[node name="attack_range" type="Area2D" parent="." unique_id=475427955]
+[node name="targeting" type="Area2D" parent="." unique_id=475427955]
 script = ExtResource("4_arkgd")
 
-[node name="range_shape" type="CollisionShape2D" parent="attack_range" unique_id=271249326]
+[node name="shape" type="CollisionShape2D" parent="targeting" unique_id=271249326]
 shape = SubResource("CircleShape2D_kx2c7")
 
 [node name="health" type="Node2D" parent="." unique_id=991234001]

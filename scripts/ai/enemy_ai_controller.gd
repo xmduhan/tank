@@ -1,16 +1,10 @@
 extends Node
 class_name EnemyAIController
-## 敌人 AI（无状态版）：
+## 敌人 AI（节奏重置版）：
 ## - 四向移动（不斜走）
-## - 走 1 秒停 1 秒（节拍器）
-## - 目标进入射程后，连续瞄准 aim_time 秒才允许发射
-## - 追击：有玩家就追（但仍遵守 stop_distance）
-## - 开火：仅对 targeting.current_target（射程内）开火
-##
-## 依赖：
-## - 同级 movable: MoveComponent
-## - 同级 targeting: TargetingComponent(Area2D)
-## - 同级 shoot: ShootComponent
+## - 目标进入射程后，持续瞄准 aim_time 秒才允许发射
+## - 仅当“射程内存在目标(targeting.current_target)”时才追击/开火
+## - 取消“走0.1秒停0.2秒”的节拍器规则（连续移动）
 
 const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 
@@ -22,10 +16,6 @@ const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 @export var stop_distance: float = 220.0
 @export var jitter_strength: float = 0.18
 @export var jitter_interval: float = 0.9
-
-@export_group("Walk/Rest")
-@export var walk_seconds: float = 1.0
-@export var rest_seconds: float = 1.0
 
 @export_group("Combat")
 @export var fire_cooldown: float = 0.7
@@ -52,9 +42,6 @@ var _jitter: Vector2 = Vector2.ZERO
 var _bounds: Rect2 = Rect2()
 var _rng := RandomNumberGenerator.new()
 
-var _walk_phase: bool = true
-var _phase_t: float = 0.0
-
 var _aim_target: CharacterBody2D = null
 var _aim_elapsed: float = 0.0
 
@@ -65,49 +52,35 @@ func _ready() -> void:
     assert(_shoot != null, "EnemyAIController: missing sibling 'shoot'(ShootComponent).")
     assert(_targeting != null, "EnemyAIController: missing sibling 'targeting'(TargetingComponent).")
 
+    # AI move speed is fixed to 100; player keeps MoveComponent default (200)
+    _move.speed = 100.0
+
     _rng.randomize()
-    _reset_walk_rest(true)
 
 
 func _physics_process(delta: float) -> void:
     _tick(delta)
     _update_jitter_if_needed()
-    _update_chase_target_if_needed()
     _update_world_bounds()
 
-    var in_walk_phase := _walk_phase
-    var move_dir := Vector2.ZERO
-    if in_walk_phase:
-        move_dir = _compute_desired_move_direction()
+    var target_in_range := _get_target_in_range()
+    var has_target_in_range := is_instance_valid(target_in_range)
 
+    if has_target_in_range:
+        _update_chase_target_if_needed()
+    else:
+        _chase_target = null
+
+    var move_dir := _compute_desired_move_direction(has_target_in_range)
     _move.direction = _to_cardinal(_bounded_direction(move_dir))
 
-    _update_aim_and_fire(delta)
+    _update_aim_and_fire(delta, target_in_range)
 
 
 func _tick(delta: float) -> void:
     _retarget_t -= delta
     _fire_t -= delta
     _jitter_t -= delta
-    _phase_t -= delta
-
-    if _phase_t <= 0.0:
-        _advance_walk_rest()
-
-
-func _reset_walk_rest(start_walking: bool) -> void:
-    _walk_phase = start_walking
-    _phase_t = _phase_duration_seconds(_walk_phase)
-
-
-func _advance_walk_rest() -> void:
-    _walk_phase = not _walk_phase
-    _phase_t = _phase_duration_seconds(_walk_phase)
-
-
-func _phase_duration_seconds(walk_phase: bool) -> float:
-    var s := walk_seconds if walk_phase else rest_seconds
-    return maxf(s, 0.0)
 
 
 func _update_jitter_if_needed() -> void:
@@ -158,31 +131,26 @@ func _estimate_host_radius() -> float:
     return 34.0
 
 
-func _compute_desired_move_direction() -> Vector2:
+func _compute_desired_move_direction(has_target_in_range: bool) -> Vector2:
+    if not has_target_in_range:
+        return Vector2.ZERO
+
     if is_instance_valid(_chase_target):
         var to_target := _chase_target.global_position - _host.global_position
         if to_target.length() <= stop_distance:
             return Vector2.ZERO
         return (to_target.normalized() + _jitter).normalized()
 
-    return _wander_direction()
+    return Vector2.ZERO
 
 
-func _wander_direction() -> Vector2:
-    var dir := _jitter
-    if dir.length() <= 0.001:
-        dir = _random_unit() * 0.75
-    return dir.normalized()
-
-
-func _update_aim_and_fire(delta: float) -> void:
-    var target := _get_target_in_range()
-    if not is_instance_valid(target):
+func _update_aim_and_fire(delta: float, target_in_range: CharacterBody2D) -> void:
+    if not is_instance_valid(target_in_range):
         _reset_aim()
         return
 
-    if target != _aim_target:
-        _aim_target = target
+    if target_in_range != _aim_target:
+        _aim_target = target_in_range
         _aim_elapsed = 0.0
 
     _aim_elapsed += delta
@@ -194,7 +162,7 @@ func _update_aim_and_fire(delta: float) -> void:
         return
 
     _fire_t = maxf(fire_cooldown, 0.0)
-    _shoot.shoot(target)
+    _shoot.shoot(target_in_range)
 
 
 func _reset_aim() -> void:

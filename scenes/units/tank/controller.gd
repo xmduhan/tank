@@ -2,7 +2,7 @@ extends Node
 ## 玩家坦克控制器，负责将输入转化为移动指令和技能操作。
 
 @onready var _move: MoveComponent = get_parent().get_node("movable") as MoveComponent
-@onready var _attack_range: Area2D = get_parent().get_node_or_null("attack_range")
+@onready var _attack_range: Area2D = get_parent().get_node_or_null("targeting")
 @onready var _shoot: ShootComponent = get_parent().get_node_or_null("shoot") as ShootComponent
 
 
@@ -54,7 +54,7 @@ func _try_shoot() -> void:
         return
 
     var target: CharacterBody2D = null
-    if "current_target" in _attack_range:
+    if _attack_range.has_method("get"):
         target = _attack_range.get("current_target") as CharacterBody2D
     else:
         if _attack_range.has_method("get_current_target"):

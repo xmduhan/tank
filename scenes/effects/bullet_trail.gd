@@ -2,7 +2,7 @@ extends Node2D
 
 signal arrived
 
-@export var width: float = 10.0
+@export var width: float = 16.5
 @export var color: Color = Color(1.0, 0.98, 0.85, 1.0)
 
 ## 到达后淡出时间（更短 = 反馈更快）
@@ -15,12 +15,16 @@ signal arrived
 @export_range(0.0, 1.0, 0.01) var arrive_threshold: float = 0.92
 
 @export_group("Feel")
-## 尾迹长度占总距离的比例（越小 = 弹道越短）
-@export_range(0.01, 1.0, 0.01) var trail_length_ratio: float = 0.18
+## 尾迹长度占总距离的比例（越大 = 弹道越长）
+@export_range(0.01, 1.0, 0.01) var trail_length_ratio: float = 0.38
 ## 尾迹的最小长度（像素），防止距离很近时完全看不见
-@export var min_trail_length: float = 22.0
-## 速度倍率（需求：加快 *4）
+@export var min_trail_length: float = 50.0
+## 速度倍率
 @export var speed_multiplier: float = 4.0
+
+@export_group("Shape")
+## 水滴形线段数量（越多越平滑）
+@export var segments: int = 16
 
 var _start: Vector2
 var _end: Vector2
@@ -47,7 +51,7 @@ func setup(start_pos: Vector2, end_pos: Vector2, speed: float = 900.0) -> void:
     _fading = false
     _arrived_emitted = false
 
-    var dist := _start.distance_to(_end)
+    var dist: float = _start.distance_to(_end)
     _flight_time = max(dist / _speed, min_flight_time)
 
     _apply_style()
@@ -66,14 +70,14 @@ func _process(delta: float) -> void:
         return
 
     if _fading:
-        var c := _line.default_color
+        var c: Color = _line.default_color
         c.a = max(c.a - delta / max(fade_time, 0.001), 0.0)
         _line.default_color = c
         if c.a <= 0.01:
             queue_free()
         return
 
-    var dist := _start.distance_to(_end)
+    var dist: float = _start.distance_to(_end)
     if dist <= 0.001:
         _emit_arrived_if_needed()
         _begin_fade()
@@ -82,7 +86,7 @@ func _process(delta: float) -> void:
     _elapsed += delta
     _t = clampf(_elapsed / max(_flight_time, 0.001), 0.0, 1.0)
 
-    var head := _start.lerp(_end, _t)
+    var head: Vector2 = _start.lerp(_end, _t)
     _update_line(head)
 
     if (not _arrived_emitted) and _t >= arrive_threshold:
@@ -99,12 +103,13 @@ func _apply_style() -> void:
     _line.default_color = color
 
 
+## 用多段线点构建尾迹，配合 width_curve 实现水滴形状
 func _update_line(head: Vector2) -> void:
-    var full_dist := _start.distance_to(_end)
+    var full_dist: float = _start.distance_to(_end)
     var tail_len: float = max(full_dist * trail_length_ratio, min_trail_length)
 
-    var dir := head - _start
-    var head_dist := dir.length()
+    var dir: Vector2 = head - _start
+    var head_dist: float = dir.length()
     if head_dist <= 0.001:
         _line.clear_points()
         _line.add_point(_start)
@@ -112,11 +117,17 @@ func _update_line(head: Vector2) -> void:
         return
 
     var tail_start_dist: float = max(head_dist - tail_len, 0.0)
-    var tail = _start + dir.normalized() * tail_start_dist
+    var direction: Vector2 = dir.normalized()
+    var tail: Vector2 = _start + direction * tail_start_dist
 
     _line.clear_points()
-    _line.add_point(tail)
-    _line.add_point(head)
+
+    # 使用多个线段点，让 width_curve 的水滴轮廓平滑渲染
+    var seg: int = max(segments, 2)
+    for i in range(seg + 1):
+        var tt: float = float(i) / float(seg)
+        var point: Vector2 = tail.lerp(head, tt)
+        _line.add_point(point)
 
 
 func _emit_arrived_if_needed() -> void:

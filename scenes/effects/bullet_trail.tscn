@@ -1,11 +1,18 @@
-[gd_scene format=3 load_steps=2 uid="uid://d0b7j2m1s9q0p"]
+[gd_scene format=3 load_steps=3 uid="uid://d0b7j2m1s9q0p"]
 
 [ext_resource type="Script" path="res://scenes/effects/bullet_trail.gd" id="1_bullet_trail_gd"]
+
+[sub_resource type="Curve" id="Curve_teardrop"]
+_data = [Vector2(0, 0), 0.0, 3.0, 0, 0, Vector2(0.6, 0.9), 1.2, 0.4, 0, 0, Vector2(0.85, 1), 0.2, -2.0, 0, 0, Vector2(1, 0.5), -3.0, 0.0, 0, 0]
+point_count = 4
 
 [node name="BulletTrail" type="Node2D"]
 script = ExtResource("1_bullet_trail_gd")
 
 [node name="Line" type="Line2D" parent="."]
-width = 10.0
+width = 16.5
+width_curve = SubResource("Curve_teardrop")
 default_color = Color(1, 0.98, 0.85, 1)
+end_cap_mode = 2
+joint_mode = 2
 points = PackedVector2Array(0, 0, 0, 0)

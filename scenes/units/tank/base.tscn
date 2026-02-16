@@ -7,6 +7,8 @@
 [ext_resource type="Script" uid="uid://caot20gsdpptm" path="res://scripts/components/health.gd" id="5_health"]
 [ext_resource type="Script" uid="uid://bhsudweft4lbs" path="res://scripts/components/shoot.gd" id="6_shoot"]
 
+[ext_resource type="Script" path="res://scripts/components/death_fx.gd" id="7_death_fx"]
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ymsbx"]
 size = Vector2(110, 60)
 
@@ -42,3 +44,6 @@ bg_color = Color(0.4, 0, 0, 0.54901963)
 [node name="shoot" type="Node" parent="." unique_id=321987654]
 script = ExtResource("6_shoot")
 turret_path = NodePath("../turret")
+
+[node name="death_fx" type="Node" parent="." unique_id=887766554]
+script = ExtResource("7_death_fx")

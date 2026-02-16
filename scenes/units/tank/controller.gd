@@ -39,18 +39,20 @@ func _physics_process(_delta: float) -> void:
 
 
 func _get_movement_direction() -> Vector2:
-    var direction := Vector2.ZERO
+    var x := 0.0
+    var y := 0.0
 
-    if Input.is_key_pressed(KEY_A):
-        direction.x -= 1
-    if Input.is_key_pressed(KEY_D):
-        direction.x += 1
-    if Input.is_key_pressed(KEY_W):
-        direction.y -= 1
-    if Input.is_key_pressed(KEY_S):
-        direction.y += 1
+    x += _axis_value(KEY_A, KEY_D)   # WASD
+    y += _axis_value(KEY_W, KEY_S)
 
-    return direction
+    x += _axis_value(KEY_H, KEY_L)   # HJKL
+    y += _axis_value(KEY_K, KEY_J)
+
+    return Vector2(clampf(x, -1.0, 1.0), clampf(y, -1.0, 1.0))
+
+
+func _axis_value(negative_key: Key, positive_key: Key) -> float:
+    return float(Input.is_key_pressed(positive_key)) - float(Input.is_key_pressed(negative_key))
 
 
 func _try_cycle_target() -> void:

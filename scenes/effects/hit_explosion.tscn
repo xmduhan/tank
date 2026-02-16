@@ -18,8 +18,8 @@ angular_velocity_min = -12.0
 angular_velocity_max = 12.0
 damping_min = 6.0
 damping_max = 10.0
-scale_min = 0.8
-scale_max = 1.25
+scale_min = 0.1
+scale_max = 5.0
 color_ramp = SubResource("Gradient_sparks")
 
 [node name="HitExplosion" type="Node2D"]
@@ -27,8 +27,8 @@ script = ExtResource("1_hit_explosion_gd")
 
 [node name="Sparks" type="GPUParticles2D" parent="."]
 scale = Vector2(2, 2)
-amount = 64
+amount = 128
 one_shot = true
 explosiveness = 1
-lifetime = 0.22
+lifetime = 0.15
 process_material = SubResource("ParticleProcessMaterial_sparks")

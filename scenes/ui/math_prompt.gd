@@ -19,6 +19,11 @@ func _ready() -> void:
     visible = false
     _answer.text_submitted.connect(_on_text_submitted)
 
+    # 关键：让本 CanvasLayer 在 UI 聚焦时也能收到未处理输入（Esc 取消）
+    _answer.mouse_filter = Control.MOUSE_FILTER_STOP
+    _answer.top_level = false
+    set_process_unhandled_input(true)
+
 
 func popup_question() -> void:
     _generate_question()
@@ -53,13 +58,14 @@ func _generate_question() -> void:
     if is_add:
         _expected = a + b
         _question_label.text = "%d + %d = ?" % [a, b]
-    else:
-        if a < b:
-            var tmp := a
-            a = b
-            b = tmp
-        _expected = a - b
-        _question_label.text = "%d - %d = ?" % [a, b]
+        return
+
+    if a < b:
+        var tmp := a
+        a = b
+        b = tmp
+    _expected = a - b
+    _question_label.text = "%d - %d = ?" % [a, b]
 
 
 func _on_text_submitted(text: String) -> void:

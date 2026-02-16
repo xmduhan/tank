@@ -9,6 +9,7 @@ const MATH_PROMPT_SCENE: PackedScene = preload("res://scenes/ui/math_prompt.tscn
 
 var _math_prompt: MathPrompt
 var _pending_shot_target: CharacterBody2D = null
+var _asking: bool = false
 
 
 func _ready() -> void:
@@ -19,6 +20,11 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
     if not (event is InputEventKey and event.pressed):
+        return
+
+    if _asking:
+        if event.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
+            get_viewport().set_input_as_handled()
         return
 
     match event.keycode:
@@ -61,6 +67,7 @@ func _try_shoot_with_math_gate() -> void:
         return
 
     _pending_shot_target = target
+    _asking = true
     _math_prompt.popup_question()
     get_viewport().set_input_as_handled()
 
@@ -91,15 +98,22 @@ func _ensure_math_prompt() -> void:
     world.add_child(_math_prompt)
 
     _math_prompt.answered_correct.connect(_on_math_correct)
+    _math_prompt.answered_wrong.connect(_on_math_wrong)
     _math_prompt.canceled.connect(_on_math_canceled)
 
 
 func _on_math_correct() -> void:
+    _asking = false
     var target := _pending_shot_target
     _pending_shot_target = null
     if is_instance_valid(target):
         _shoot.shoot(target)
 
 
+func _on_math_wrong() -> void:
+    _asking = true
+
+
 func _on_math_canceled() -> void:
+    _asking = false
     _pending_shot_target = null

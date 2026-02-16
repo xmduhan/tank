@@ -2,7 +2,7 @@ extends Node2D
 
 signal arrived
 
-@export var width: float = 16.5
+@export var width: float = 12.375
 @export var color: Color = Color(1.0, 0.98, 0.85, 1.0)
 
 ## 到达后淡出时间（更短 = 反馈更快）
@@ -16,7 +16,7 @@ signal arrived
 
 @export_group("Feel")
 ## 尾迹长度占总距离的比例（越大 = 弹道越长）
-@export_range(0.01, 1.0, 0.01) var trail_length_ratio: float = 0.38
+@export_range(0.01, 1.0, 0.01) var trail_length_ratio: float = 0.19
 ## 尾迹的最小长度（像素），防止距离很近时完全看不见
 @export var min_trail_length: float = 50.0
 ## 速度倍率

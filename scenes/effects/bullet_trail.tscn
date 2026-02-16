@@ -12,7 +12,7 @@ script = ExtResource("1_bullet_trail_gd")
 [node name="Line" type="Line2D" parent="."]
 width = 12.375
 width_curve = SubResource("Curve_teardrop")
-default_color = Color(1, 0.78, 0.25, 1)
+default_color = Color(1, 0.15, 0.08, 1)
 end_cap_mode = 2
 joint_mode = 2
 points = PackedVector2Array(0, 0, 0, 0)

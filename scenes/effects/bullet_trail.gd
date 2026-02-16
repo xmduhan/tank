@@ -3,7 +3,7 @@ extends Node2D
 signal arrived
 
 @export var width: float = 12.375
-@export var color: Color = Color(1.0, 0.98, 0.85, 1.0)
+@export var color: Color = Color(1.0, 0.78, 0.25, 1.0)
 
 ## 到达后淡出时间（更短 = 反馈更快）
 @export var fade_time: float = 0.04

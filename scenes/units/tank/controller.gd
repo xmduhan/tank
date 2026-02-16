@@ -1,13 +1,13 @@
 extends Node
 ## 玩家坦克控制器：负责将输入转化为移动指令；空格触发答题，答对后才射击。
 
-const TARGET_MATH_PROMPT_SCENE: PackedScene = preload("res://scenes/ui/target_math_prompt.tscn")
+const TARGET_MATH_PROMPT_SCENE: PackedScene = preload("res://scenes/ui/target_math_prompt_drawn.tscn")
 
 @onready var _move: MoveComponent = get_parent().get_node("movable") as MoveComponent
 @onready var _attack_range: Area2D = get_parent().get_node_or_null("targeting")
 @onready var _shoot: ShootComponent = get_parent().get_node_or_null("shoot") as ShootComponent
 
-var _math_prompt: TargetMathPrompt
+var _math_prompt: TargetMathPromptDrawn
 var _pending_shot_target: CharacterBody2D = null
 var _asking: bool = false
 
@@ -94,7 +94,7 @@ func _ensure_math_prompt() -> void:
     if world == null:
         world = get_parent()
 
-    _math_prompt = TARGET_MATH_PROMPT_SCENE.instantiate() as TargetMathPrompt
+    _math_prompt = TARGET_MATH_PROMPT_SCENE.instantiate() as TargetMathPromptDrawn
     assert(_math_prompt != null, "Controller: TargetMathPrompt instantiate failed.")
     world.add_child(_math_prompt)
 

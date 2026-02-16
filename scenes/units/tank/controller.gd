@@ -62,7 +62,7 @@ func _try_shoot_with_math_gate() -> void:
     if _attack_range == null or _shoot == null:
         return
 
-    var target := _get_current_target()
+    var target: CharacterBody2D = _get_current_target()
     if not is_instance_valid(target):
         return
 

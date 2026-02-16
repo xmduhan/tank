@@ -53,7 +53,7 @@ func _ready() -> void:
     assert(_targeting != null, "EnemyAIController: missing sibling 'targeting'(TargetingComponent).")
 
     # AI move speed is fixed to 100; player keeps MoveComponent default (200)
-    _move.speed = 100.0
+    _move.speed = 50
 
     _rng.randomize()
 

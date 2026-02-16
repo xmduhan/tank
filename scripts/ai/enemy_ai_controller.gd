@@ -1,14 +1,17 @@
 extends Node
 class_name EnemyAIController
-## 简单敌人 AI：
-## - 找最近的玩家
-## - 朝玩家移动（保持一定距离）
-## - 若在攻击范围内则自动开火（复用 ShootComponent）
+## 敌人 AI（四状态）：
+## - 梦游：随机游走，不追不打
+## - 追逐：只追玩家，不开火
+## - 待命：随机游走；玩家进入射程才攻击；不主动追
+## - 疯狂：主动追击玩家并开火
 ##
 ## 依赖：
 ## - 同级 movable: MoveComponent
 ## - 同级 targeting: TargetingComponent(Area2D，可选但建议)
 ## - 同级 shoot: ShootComponent
+
+const EnemyAIStates := preload("res://scripts/ai/enemy_ai_states.gd")
 
 @export_group("Targeting")
 @export var player_group: StringName = &"player"
@@ -22,6 +25,9 @@ class_name EnemyAIController
 @export_group("Combat")
 @export var fire_cooldown: float = 0.7
 
+@export_group("State Machine")
+@export var state_switch_interval: float = 3.0
+
 @onready var _host: CharacterBody2D = get_parent() as CharacterBody2D
 @onready var _move: MoveComponent = _host.get_node_or_null("movable") as MoveComponent
 @onready var _targeting: Area2D = _host.get_node_or_null("targeting") as Area2D
@@ -34,29 +40,86 @@ var _fire_t: float = 0.0
 var _jitter_t: float = 0.0
 var _jitter: Vector2 = Vector2.ZERO
 
+var _state_t: float = 0.0
+var _state: int = EnemyAIStates.State.DREAM
+var _rng := RandomNumberGenerator.new()
+
 
 func _ready() -> void:
     assert(_host != null)
     assert(_move != null, "EnemyAIController: missing sibling 'movable'(MoveComponent).")
     assert(_shoot != null, "EnemyAIController: missing sibling 'shoot'(ShootComponent).")
-    randomize()
+
+    _rng.randomize()
+    _pick_new_state(true)
 
 
 func _physics_process(delta: float) -> void:
+    _tick_timers(delta)
+    _update_jitter_if_needed()
+    _update_target_if_needed()
+
+    _apply_state_behavior(delta)
+
+
+func _tick_timers(delta: float) -> void:
     _retarget_t -= delta
     _fire_t -= delta
     _jitter_t -= delta
+    _state_t -= delta
 
-    if _retarget_t <= 0.0:
-        _retarget_t = retarget_interval
-        _target = _find_nearest_player()
+    if _state_t <= 0.0:
+        _pick_new_state()
 
-    if _jitter_t <= 0.0:
-        _jitter_t = jitter_interval
-        _jitter = _random_unit() * jitter_strength
 
+func _pick_new_state(force: bool = false) -> void:
+    _state_t = maxf(state_switch_interval, 0.05)
+    var next := EnemyAIStates.pick_state(_rng)
+    if force:
+        _state = next
+        return
+
+    _state = next
+
+
+func _update_jitter_if_needed() -> void:
+    if _jitter_t > 0.0:
+        return
+    _jitter_t = jitter_interval
+    _jitter = _random_unit() * jitter_strength
+
+
+func _update_target_if_needed() -> void:
+    if _retarget_t > 0.0:
+        return
+    _retarget_t = retarget_interval
+    _target = _find_nearest_player()
+
+
+func _apply_state_behavior(_delta: float) -> void:
+    match _state:
+        EnemyAIStates.State.DREAM:
+            _do_wander(false)
+        EnemyAIStates.State.CHASE:
+            _do_chase(false)
+        EnemyAIStates.State.STANDBY:
+            _do_standby()
+        EnemyAIStates.State.MADNESS:
+            _do_chase(true)
+        _:
+            _do_wander(false)
+
+
+func _do_wander(allow_fire: bool) -> void:
+    _move.direction = _wander_direction()
+
+    if allow_fire:
+        _try_fire_if_in_range()
+
+
+func _do_chase(allow_fire: bool) -> void:
     if not is_instance_valid(_target):
-        _move.direction = Vector2.ZERO
+        _move.direction = _wander_direction()
         return
 
     var to_target: Vector2 = _target.global_position - _host.global_position
@@ -64,8 +127,45 @@ func _physics_process(delta: float) -> void:
 
     _move.direction = _compute_move_dir(to_target, dist)
 
-    if _can_fire_at(_target, dist):
-        _try_fire(_target)
+    if allow_fire:
+        _try_fire_if_in_range()
+
+
+func _do_standby() -> void:
+    _move.direction = _wander_direction()
+    _try_fire_if_in_range()
+
+
+func _try_fire_if_in_range() -> void:
+    if _fire_t > 0.0:
+        return
+
+    var target := _get_target_in_range()
+    if not is_instance_valid(target):
+        return
+
+    _fire_t = fire_cooldown
+    _shoot.shoot(target)
+
+
+func _get_target_in_range() -> CharacterBody2D:
+    if _targeting == null:
+        return null
+
+    if _targeting.has_method("get"):
+        return _targeting.get("current_target") as CharacterBody2D
+
+    if _targeting.has_method("get_current_target"):
+        return _targeting.call("get_current_target") as CharacterBody2D
+
+    return null
+
+
+func _wander_direction() -> Vector2:
+    var dir := _jitter
+    if dir.length() <= 0.001:
+        dir = _random_unit() * 0.75
+    return dir.normalized()
 
 
 func _compute_move_dir(to_target: Vector2, dist: float) -> Vector2:
@@ -78,26 +178,6 @@ func _compute_move_dir(to_target: Vector2, dist: float) -> Vector2:
     var dir := to_target.normalized()
     dir = (dir + _jitter).normalized()
     return dir
-
-
-func _can_fire_at(target: CharacterBody2D, _dist: float) -> bool:
-    if _fire_t > 0.0:
-        return false
-    if not is_instance_valid(target):
-        return false
-
-    # 优先：目标必须在 TargetingComponent 里（更符合“攻击范围”设定）
-    # 若没有 targeting，则允许直接射击（更鲁棒）
-    if _targeting != null and _targeting.has_method("get"):
-        var current: CharacterBody2D = _targeting.get("current_target") as CharacterBody2D
-        return is_instance_valid(current) and current == target
-
-    return true
-
-
-func _try_fire(target: CharacterBody2D) -> void:
-    _fire_t = fire_cooldown
-    _shoot.shoot(target)
 
 
 func _find_nearest_player() -> CharacterBody2D:
@@ -124,5 +204,5 @@ func _find_nearest_player() -> CharacterBody2D:
 
 
 func _random_unit() -> Vector2:
-    var a := randf() * TAU
+    var a := _rng.randf() * TAU
     return Vector2(cos(a), sin(a))

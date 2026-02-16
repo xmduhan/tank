@@ -204,8 +204,8 @@ func _draw() -> void:
     var panel_h := padding.y * 2.0 + maxf(q_size.y, input_height) + 6.0 + h_size.y
 
     var rect := Rect2(Vector2(-panel_w * 0.5, -panel_h * 0.5), Vector2(panel_w, panel_h))
-    draw_round_rect(rect, corner_radius, panel_color)
-    draw_round_rect(rect, corner_radius, border_color, false, 1.0)
+    _draw_round_rect(rect, corner_radius, panel_color)
+    _draw_round_rect(rect, corner_radius, border_color, false, 1.0)
 
     var base_x := rect.position.x + padding.x
     var base_y := rect.position.y + padding.y + q_size.y
@@ -214,8 +214,8 @@ func _draw() -> void:
 
     var input_pos := Vector2(base_x + q_size.x + 8.0, base_y - q_size.y + (q_size.y - input_height) * 0.5)
     var input_rect := Rect2(input_pos, Vector2(input_width, input_height))
-    draw_round_rect(input_rect, 6.0, input_bg)
-    draw_round_rect(input_rect, 6.0, input_border, false, 1.0)
+    _draw_round_rect(input_rect, 6.0, input_bg)
+    _draw_round_rect(input_rect, 6.0, input_border, false, 1.0)
 
     var a_fs := font_size
     var text_inset := Vector2(6.0, (input_height + a_fs) * 0.5 - 3.0)
@@ -233,3 +233,38 @@ func _draw() -> void:
 
     var hint_y := rect.position.y + padding.y + maxf(q_size.y, input_height) + 6.0 + h_size.y
     draw_string(f, Vector2(base_x, hint_y), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, int(max(12, font_size - 4)), hint_color)
+# ─── Draw Helpers ─────────────────────────────────────────
+
+## Godot 4 没有 draw_round_rect()；用 StyleBoxFlat 画圆角矩形（并支持描边）。
+func _draw_round_rect(rect: Rect2, radius: float, color: Color, filled: bool = true, border_width: float = 1.0) -> void:
+    radius = maxf(radius, 0.0)
+
+    # 退化：半径很小时直接画矩形即可
+    if radius <= 0.01:
+        draw_rect(rect, color, filled, border_width)
+        return
+
+    # 使用 StyleBoxFlat 渲染圆角（最稳妥/兼容的方式）
+    var sb := StyleBoxFlat.new()
+    sb.bg_color = color
+
+    sb.corner_radius_top_left = int(radius)
+    sb.corner_radius_top_right = int(radius)
+    sb.corner_radius_bottom_left = int(radius)
+    sb.corner_radius_bottom_right = int(radius)
+
+    if filled:
+        sb.border_width_left = 0
+        sb.border_width_top = 0
+        sb.border_width_right = 0
+        sb.border_width_bottom = 0
+    else:
+        var w := int(maxf(border_width, 1.0))
+        sb.border_width_left = w
+        sb.border_width_top = w
+        sb.border_width_right = w
+        sb.border_width_bottom = w
+        sb.border_color = color
+        sb.bg_color = Color(0, 0, 0, 0)
+
+    draw_style_box(sb, rect)

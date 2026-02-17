@@ -1,10 +1,15 @@
 extends Node
 class_name EnemySpawner
 
+signal victory
+
 const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 
 @export var enemy_scene: PackedScene = preload("res://scenes/units/tank/enemy.tscn")
+
+@export_group("Counts")
 @export var desired_enemy_count: int = 4
+@export var total_enemies_to_spawn: int = 20
 
 @export_group("Respawn")
 @export var respawn_delay_seconds: float = 5.0
@@ -14,7 +19,7 @@ const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 @export var spawn_margin: float = 24.0
 @export var corner_inset: float = 36.0
 
-var _pending_respawns: int = 0
+var _remaining_to_spawn: int = 0
 var _respawn_timer: SceneTreeTimer = null
 
 
@@ -26,6 +31,8 @@ func _ready() -> void:
 func _bootstrap() -> void:
     if not is_inside_tree():
         return
+
+    _remaining_to_spawn = max(total_enemies_to_spawn, 0)
 
     var world := _world()
     if world == null:
@@ -51,23 +58,31 @@ func _get_enemies(root: Node) -> Array[Node2D]:
     return out
 
 
-func _ensure_enemy_count() -> void:
+func _alive_enemies() -> int:
     var world := _world()
-    if world == null:
+    return 0 if world == null else _get_enemies(world).size()
+
+
+func _ensure_enemy_count() -> void:
+    if _check_victory_if_done():
         return
 
-    var alive := _get_enemies(world).size()
-    var missing: int = max(desired_enemy_count - alive - _pending_respawns, 0)
-    if missing <= 0:
+    var alive := _alive_enemies()
+    var desired := clampi(desired_enemy_count, 0, 1024)
+    var missing_on_field:int = max(desired - alive, 0)
+    var to_spawn_now:int = min(missing_on_field, _remaining_to_spawn)
+
+    if to_spawn_now <= 0:
         return
 
-    _pending_respawns += missing
-    _schedule_next_respawn_if_needed()
+    for _i in range(to_spawn_now):
+        _remaining_to_spawn -= 1
+        _schedule_next_respawn()
+
+    _check_victory_if_done()
 
 
-func _schedule_next_respawn_if_needed() -> void:
-    if _pending_respawns <= 0:
-        return
+func _schedule_next_respawn() -> void:
     if _respawn_timer != null:
         return
 
@@ -79,22 +94,20 @@ func _schedule_next_respawn_if_needed() -> void:
 func _on_respawn_timeout() -> void:
     _respawn_timer = null
 
+    if _check_victory_if_done():
+        return
+
     var world := _world()
     if world == null:
         return
 
-    var alive := _get_enemies(world).size()
-    if alive >= desired_enemy_count:
-        _pending_respawns = 0
-        return
-
-    if _pending_respawns <= 0:
-        _ensure_enemy_count()
+    if _alive_enemies() >= desired_enemy_count:
         return
 
     _spawn_one(world)
-    _pending_respawns = max(_pending_respawns - 1, 0)
-    _schedule_next_respawn_if_needed()
+
+    if _remaining_to_spawn > 0 and _alive_enemies() < desired_enemy_count:
+        _schedule_next_respawn()
 
 
 func _spawn_one(world: Node) -> void:
@@ -104,7 +117,6 @@ func _spawn_one(world: Node) -> void:
 
     world.add_child(enemy)
     enemy.global_position = _screen_corner_spawn_position(enemy)
-
     _wire_enemy(enemy)
 
 
@@ -117,6 +129,17 @@ func _wire_enemy(enemy: Node2D) -> void:
 
 func _on_enemy_exited() -> void:
     _ensure_enemy_count()
+
+
+func _check_victory_if_done() -> bool:
+    if _remaining_to_spawn > 0:
+        return false
+
+    if _alive_enemies() > 0:
+        return false
+
+    victory.emit()
+    return true
 
 
 func _screen_corner_spawn_position(enemy: Node2D) -> Vector2:

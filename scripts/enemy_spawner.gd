@@ -51,7 +51,7 @@ func _world() -> Node:
 
 func _get_enemies(root: Node) -> Array[Node2D]:
     var out: Array[Node2D] = []
-    for n in root.get_children():
+    for n in root.get_children(): 
         var e := n as Node2D
         if e != null and e.is_in_group("enemy"):
             out.append(e)
@@ -69,8 +69,8 @@ func _ensure_enemy_count() -> void:
 
     var alive := _alive_enemies()
     var desired := clampi(desired_enemy_count, 0, 1024)
-    var missing_on_field:int = max(desired - alive, 0)
-    var to_spawn_now:int = min(missing_on_field, _remaining_to_spawn)
+    var missing_on_field: int = max(desired - alive, 0)
+    var to_spawn_now: int = min(missing_on_field, _remaining_to_spawn)
 
     if to_spawn_now <= 0:
         return

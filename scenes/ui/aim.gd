@@ -4,15 +4,23 @@ class_name TargetMathPromptDrawn
 ## - _draw 绘制题目与输入框
 ## - _unhandled_input 捕获数字/退格/回车/ESC
 ## - 可选：固定屏幕居中 or 跟随目标位置
+##
+## 新增：
+## - 倒计时（time_limit_seconds，默认10秒）
+## - 超时发出 timed_out（视为射击失败）
 
 signal answered_correct
 signal answered_wrong
 signal canceled
+signal timed_out
 
 const QUESTION_PREFIX: String = "射击诸元: "
 
 @export var max_operand: int = 10
 @export var y_offset: float = 85.0
+
+@export_group("Timer")
+@export var time_limit_seconds: float = 10.0
 
 @export_group("Layout")
 @export var center_on_screen: bool = true
@@ -45,6 +53,7 @@ var _active: bool = false
 var _target: Node2D = null
 
 var _caret_phase: float = 0.0
+var _time_left: float = 0.0
 
 var _font: Font = null
 
@@ -70,6 +79,8 @@ func popup_for_target(target: Node2D) -> void:
     _generate_question()
     _typed = ""
 
+    _time_left = maxf(time_limit_seconds, 0.0)
+
     visible = true
     _active = true
     _caret_phase = 0.0
@@ -83,6 +94,7 @@ func hide_prompt() -> void:
     _active = false
     _target = null
     _typed = ""
+    _time_left = 0.0
     queue_redraw()
 
 
@@ -95,10 +107,23 @@ func _process(delta: float) -> void:
         canceled.emit()
         return
 
+    _tick_timer(delta)
     _update_position()
 
     _caret_phase += delta * TAU * caret_blink_hz
     queue_redraw()
+
+
+func _tick_timer(delta: float) -> void:
+    if _time_left <= 0.0:
+        return
+
+    _time_left -= delta
+    if _time_left > 0.0:
+        return
+
+    hide_prompt()
+    timed_out.emit()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -137,12 +162,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _submit_if_possible() -> void:
     var s: String = _typed.strip_edges()
-    if s.is_empty():
-        answered_wrong.emit()
-        return
-
-    if not s.is_valid_int():
+    if s.is_empty() or (not s.is_valid_int()):
         _typed = ""
+        hide_prompt()
         answered_wrong.emit()
         return
 
@@ -153,6 +175,7 @@ func _submit_if_possible() -> void:
         return
 
     _typed = ""
+    hide_prompt()
     answered_wrong.emit()
 
 
@@ -220,7 +243,8 @@ func _draw() -> void:
 
     var question: String = _question_text()
     var answer: String = _typed
-    var hint: String = "Enter 提交  Esc 取消  Backspace 删除"
+    var secs: int = maxi(int(ceil(_time_left)), 0)
+    var hint: String = "剩余 %ds | Enter 提交  Esc 取消  Backspace 删除" % secs
 
     var f: Font = _font
     if f == null:

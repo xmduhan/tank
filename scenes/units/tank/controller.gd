@@ -124,8 +124,11 @@ func _ensure_math_prompt() -> void:
     world.add_child(_math_prompt)
 
     _math_prompt.answered_correct.connect(_on_math_correct)
-    _math_prompt.answered_wrong.connect(_on_math_wrong)
-    _math_prompt.canceled.connect(_on_math_canceled)
+    _math_prompt.answered_wrong.connect(_on_math_failed)
+    _math_prompt.canceled.connect(_on_math_failed)
+
+    if _math_prompt.has_signal("timed_out"):
+        _math_prompt.connect("timed_out", Callable(self, "_on_math_failed"))
 
 
 func _ensure_pause_snapshot() -> void:
@@ -156,11 +159,12 @@ func _on_math_correct() -> void:
         _shoot.shoot(target)
 
 
-func _on_math_wrong() -> void:
-    _asking = true
-
-
-func _on_math_canceled() -> void:
+func _on_math_failed() -> void:
     _asking = false
-    _pending_shot_target = null
     _resume_game_if_needed()
+
+    var target: CharacterBody2D = _pending_shot_target
+    _pending_shot_target = null
+
+    if is_instance_valid(target) and is_instance_valid(_shoot):
+        _shoot.shoot_miss(target)

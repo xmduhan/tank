@@ -4,6 +4,9 @@ class_name ShootComponent
 ## - 炮塔朝向目标
 ## - 生成弹道 bullet_trail
 ## - 弹道到达后生成命中特效并扣血
+##
+## 新增：
+## - shoot_miss(): 打空（只生成随机偏移的弹道特效，不结算伤害/不生成命中特效）
 
 @export var turret_path: NodePath
 @export var muzzle_offset: Vector2 = Vector2(55, 0)
@@ -16,8 +19,13 @@ class_name ShootComponent
 @export var bullet_trail_scene: PackedScene = preload("res://scenes/effects/bullet_trail.tscn")
 @export var hit_explosion_scene: PackedScene = preload("res://scenes/effects/explosion.tscn")
 
+@export_group("Miss (FX Only)")
+@export var miss_radius: float = 120.0
+@export var miss_min_distance: float = 35.0
+
 var _host: Node2D
 var _turret: Node2D
+var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
 func _ready() -> void:
@@ -30,6 +38,7 @@ func _ready() -> void:
         _turret = get_node_or_null(turret_path) as Node2D
 
     assert(_turret != null, "ShootComponent: turret not found, set turret_path or ensure sibling 'turret' exists.")
+    _rng.randomize()
 
 
 ## 对目标开火：生成弹道；弹道到达后才结算伤害
@@ -62,6 +71,38 @@ func shoot(target: CharacterBody2D) -> void:
     else:
         _apply_damage(target)
         _spawn_hit_explosion(end_pos)
+
+
+## 打空：随机偏移落点，仅生成弹道特效（不伤害、不爆炸）
+func shoot_miss(target: CharacterBody2D) -> void:
+    if not is_instance_valid(target):
+        return
+
+    var world: Node = SceneTreeUtils.safe_world(_host)
+    if world == null or bullet_trail_scene == null:
+        return
+
+    var start_pos: Vector2 = _get_muzzle_global_position()
+    var miss_pos: Vector2 = _random_miss_position_around(target.global_position)
+
+    _aim_turret_at(miss_pos)
+
+    var trail: Node = bullet_trail_scene.instantiate()
+    world.add_child(trail)
+
+    if trail.has_method("setup"):
+        trail.call("setup", start_pos, miss_pos, bullet_speed)
+
+
+func _random_miss_position_around(center: Vector2) -> Vector2:
+    var r_max: float = maxf(miss_radius, 0.0)
+    var r_min: float = clampf(miss_min_distance, 0.0, r_max)
+    var angle: float = _rng.randf_range(0.0, TAU)
+
+    var rr: float = r_max
+    if r_max > 0.0:
+        rr = sqrt(_rng.randf_range(r_min * r_min, r_max * r_max))
+    return center + Vector2(cos(angle), sin(angle)) * rr
 
 
 func _on_trail_arrived(target: CharacterBody2D, hit_pos: Vector2) -> void:

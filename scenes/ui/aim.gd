@@ -14,15 +14,15 @@ signal canceled
 
 @export_group("Layout")
 @export var center_on_screen: bool = true
-@export var input_width: float = 220.0
-@export var input_height: float = 60.0
+@export var input_width: float = 360.0
+@export var input_height: float = 92.0
 @export var caret_blink_hz: float = 2.8
 
 @export_group("Style")
-@export var font_size: int = 48
-@export var hint_font_size: int = 24
-@export var padding: Vector2 = Vector2(22.0, 18.0)
-@export var corner_radius: float = 14.0
+@export var font_size: int = 72
+@export var hint_font_size: int = 30
+@export var padding: Vector2 = Vector2(30.0, 22.0)
+@export var corner_radius: float = 18.0
 @export var panel_color: Color = Color(0.06, 0.06, 0.08, 0.82)
 @export var border_color: Color = Color(1, 1, 1, 0.18)
 @export var text_color: Color = Color(0.95, 0.95, 0.95, 1.0)
@@ -152,6 +152,7 @@ func _update_position() -> void:
     if center_on_screen:
         _update_position_centered()
         return
+
     _update_position_follow_target()
 
 
@@ -236,11 +237,11 @@ func _draw() -> void:
         base_y - q_size.y + (q_size.y - input_height) * 0.5
     )
     var input_rect: Rect2 = Rect2(input_pos, Vector2(input_width, input_height))
-    _draw_round_rect(input_rect, 10.0, input_bg)
-    _draw_round_rect(input_rect, 10.0, input_border, false, 1.0)
+    _draw_round_rect(input_rect, 12.0, input_bg)
+    _draw_round_rect(input_rect, 12.0, input_border, false, 1.0)
 
     var a_fs: int = q_fs
-    var text_inset: Vector2 = Vector2(12.0, (input_height + a_fs) * 0.5 - 4.0)
+    var text_inset: Vector2 = Vector2(14.0, (input_height + a_fs) * 0.5 - 6.0)
     var text_origin: Vector2 = input_rect.position + text_inset
 
     draw_string(f, text_origin, answer, HORIZONTAL_ALIGNMENT_LEFT, input_width - 16.0, a_fs, text_color)
@@ -248,10 +249,10 @@ func _draw() -> void:
     var caret_on: bool = sin(_caret_phase) > 0.0
     if caret_on:
         var a_size: Vector2 = f.get_string_size(answer, HORIZONTAL_ALIGNMENT_LEFT, -1, a_fs)
-        var cx: float = minf(input_rect.position.x + 12.0 + a_size.x + 1.0, input_rect.end.x - 12.0)
-        var cy0: float = input_rect.position.y + 8.0
-        var cy1: float = input_rect.end.y - 8.0
-        draw_line(Vector2(cx, cy0), Vector2(cx, cy1), caret_color, 3.0)
+        var cx: float = minf(input_rect.position.x + 14.0 + a_size.x + 1.0, input_rect.end.x - 14.0)
+        var cy0: float = input_rect.position.y + 10.0
+        var cy1: float = input_rect.end.y - 10.0
+        draw_line(Vector2(cx, cy0), Vector2(cx, cy1), caret_color, 4.0)
 
     var hint_y: float = rect.position.y + padding.y + maxf(q_size.y, input_height) + 14.0 + h_size.y
     draw_string(f, Vector2(base_x, hint_y), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, h_fs, hint_color)

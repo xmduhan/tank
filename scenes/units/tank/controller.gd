@@ -2,6 +2,7 @@ extends Node
 ## 玩家坦克控制器：负责将输入转化为移动指令；空格触发答题，答对后才射击。
 
 const TARGET_MATH_PROMPT_SCENE: PackedScene = preload("res://scenes/ui/aim.tscn")
+const PAUSE_SNAPSHOT_SCENE: PackedScene = preload("res://scripts/utils/pause_snapshot.tscn")
 
 @export_group("Screen Bounds")
 @export var screen_margin: float = 18.0
@@ -12,14 +13,20 @@ const TARGET_MATH_PROMPT_SCENE: PackedScene = preload("res://scenes/ui/aim.tscn"
 @onready var _shoot: ShootComponent = _host.get_node_or_null("shoot") as ShootComponent
 
 var _math_prompt: TargetMathPromptDrawn
+var _pause: PauseSnapshot
+
 var _pending_shot_target: CharacterBody2D = null
 var _asking: bool = false
 
 
 func _ready() -> void:
+    process_mode = Node.PROCESS_MODE_PAUSABLE
+
     assert(_host != null, "Controller: host 必须是 CharacterBody2D。")
     assert(_move != null, "Controller: 未找到兄弟节点 'movable'(MoveComponent)。")
     assert(_shoot != null, "Controller: 未找到兄弟节点 'shoot'(ShootComponent)。")
+
+    _ensure_pause_snapshot()
     _ensure_math_prompt()
 
 
@@ -45,20 +52,20 @@ func _physics_process(_delta: float) -> void:
 
 
 func _clamp_to_screen_bounds() -> void:
-    var vp := get_viewport()
+    var vp: Viewport = get_viewport()
     if vp == null:
         return
     WorldBounds.clamp_body_to_visible_rect(_host, vp, screen_margin)
 
 
 func _get_movement_direction() -> Vector2:
-    var x := 0.0
-    var y := 0.0
+    var x: float = 0.0
+    var y: float = 0.0
 
-    x += _axis_value(KEY_A, KEY_D)   # WASD
+    x += _axis_value(KEY_A, KEY_D)
     y += _axis_value(KEY_W, KEY_S)
 
-    x += _axis_value(KEY_H, KEY_L)   # HJKL
+    x += _axis_value(KEY_H, KEY_L)
     y += _axis_value(KEY_K, KEY_J)
 
     return Vector2(clampf(x, -1.0, 1.0), clampf(y, -1.0, 1.0))
@@ -69,7 +76,7 @@ func _axis_value(negative_key: Key, positive_key: Key) -> float:
 
 
 func _try_cycle_target() -> void:
-    if _attack_range and _attack_range.has_method("cycle_target"):
+    if _attack_range != null and _attack_range.has_method("cycle_target"):
         _attack_range.cycle_target()
 
 
@@ -83,6 +90,9 @@ func _try_shoot_with_math_gate() -> void:
 
     _pending_shot_target = target
     _asking = true
+
+    if is_instance_valid(_pause):
+        _pause.begin()
 
     _math_prompt.popup_for_target(target)
     get_viewport().set_input_as_handled()
@@ -105,7 +115,7 @@ func _ensure_math_prompt() -> void:
     if is_instance_valid(_math_prompt):
         return
 
-    var world := SceneTreeUtils.safe_world(self)
+    var world: Node = SceneTreeUtils.safe_world(self)
     if world == null:
         world = get_parent()
 
@@ -118,9 +128,29 @@ func _ensure_math_prompt() -> void:
     _math_prompt.canceled.connect(_on_math_canceled)
 
 
+func _ensure_pause_snapshot() -> void:
+    if is_instance_valid(_pause):
+        return
+
+    var world: Node = SceneTreeUtils.safe_world(self)
+    if world == null:
+        world = get_parent()
+
+    _pause = PAUSE_SNAPSHOT_SCENE.instantiate() as PauseSnapshot
+    assert(_pause != null, "Controller: PauseSnapshot instantiate failed.")
+    world.add_child(_pause)
+
+
+func _resume_game_if_needed() -> void:
+    if is_instance_valid(_pause):
+        _pause.end()
+
+
 func _on_math_correct() -> void:
     _asking = false
-    var target := _pending_shot_target
+    _resume_game_if_needed()
+
+    var target: CharacterBody2D = _pending_shot_target
     _pending_shot_target = null
     if is_instance_valid(target):
         _shoot.shoot(target)
@@ -133,3 +163,4 @@ func _on_math_wrong() -> void:
 func _on_math_canceled() -> void:
     _asking = false
     _pending_shot_target = null
+    _resume_game_if_needed()

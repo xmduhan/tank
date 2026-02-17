@@ -3,7 +3,6 @@ class_name EnemySpawner
 
 signal victory
 
-
 @export var enemy_scene: PackedScene = preload("res://scenes/units/tank/enemy.tscn")
 
 @export_group("Counts")
@@ -33,7 +32,7 @@ func _bootstrap() -> void:
 
     _remaining_to_spawn = max(total_enemies_to_spawn, 0)
 
-    var world := _world()
+    var world: Node = _world()
     if world == null:
         return
 
@@ -47,7 +46,7 @@ func _world() -> Node:
     if not is_inside_tree():
         return null
 
-    var tree := get_tree()
+    var tree: SceneTree = get_tree()
     if tree == null:
         return null
 
@@ -58,14 +57,14 @@ func _world() -> Node:
 func _get_enemies(root: Node) -> Array[Node2D]:
     var out: Array[Node2D] = []
     for n in root.get_children():
-        var e := n as Node2D
+        var e: Node2D = n as Node2D
         if e != null and e.is_in_group("enemy"):
             out.append(e)
     return out
 
 
 func _alive_enemies() -> int:
-    var world := _world()
+    var world: Node = _world()
     return 0 if world == null else _get_enemies(world).size()
 
 
@@ -73,8 +72,8 @@ func _ensure_enemy_count() -> void:
     if _check_victory_if_done():
         return
 
-    var alive := _alive_enemies()
-    var desired := clampi(desired_enemy_count, 0, 1024)
+    var alive: int = _alive_enemies()
+    var desired: int = clampi(desired_enemy_count, 0, 1024)
     var missing_on_field: int = max(desired - alive, 0)
     var to_spawn_now: int = min(missing_on_field, _remaining_to_spawn)
 
@@ -92,7 +91,7 @@ func _schedule_next_respawn() -> void:
     if _respawn_timer != null:
         return
 
-    var delay := maxf(respawn_delay_seconds, 0.0)
+    var delay: float = maxf(respawn_delay_seconds, 0.0)
     _respawn_timer = get_tree().create_timer(delay)
     _respawn_timer.timeout.connect(_on_respawn_timeout)
 
@@ -103,7 +102,7 @@ func _on_respawn_timeout() -> void:
     if _check_victory_if_done():
         return
 
-    var world := _world()
+    var world: Node = _world()
     if world == null:
         return
 
@@ -117,7 +116,7 @@ func _on_respawn_timeout() -> void:
 
 
 func _spawn_one(world: Node) -> void:
-    var enemy := enemy_scene.instantiate() as Node2D
+    var enemy: Node2D = enemy_scene.instantiate() as Node2D
     if enemy == null:
         return
 
@@ -151,19 +150,19 @@ func _check_victory_if_done() -> bool:
 
 
 func _screen_corner_spawn_position(enemy: Node2D) -> Vector2:
-    var vp := get_viewport()
+    var vp: Viewport = get_viewport()
     if vp == null:
         return Vector2.ZERO
 
-    var visible := WorldBounds.get_visible_world_rect(vp)
+    var visible: Rect2 = WorldBounds.get_visible_world_rect(vp)
     if visible.size.length() <= 1.0:
         return Vector2.ZERO
 
-    var r := _estimate_radius(enemy)
-    var inset := maxf(corner_inset, 0.0) + maxf(spawn_margin, 0.0) + r
-    var rect := WorldBounds.inset_rect(visible, Vector2(inset, inset))
+    var r: float = _estimate_radius(enemy)
+    var inset: float = maxf(corner_inset, 0.0) + maxf(spawn_margin, 0.0) + r
+    var rect: Rect2 = WorldBounds.inset_rect(visible, Vector2(inset, inset))
 
-    var corners := [
+    var corners: Array[Vector2] = [
         rect.position,
         Vector2(rect.end.x, rect.position.y),
         Vector2(rect.position.x, rect.end.y),
@@ -177,15 +176,15 @@ func _estimate_radius(body: Node2D) -> float:
     if body == null:
         return 34.0
 
-    var shape_node := body.get_node_or_null("shape") as CollisionShape2D
+    var shape_node: CollisionShape2D = body.get_node_or_null("shape") as CollisionShape2D
     if shape_node == null or shape_node.shape == null:
         return 34.0
 
-    var s := shape_node.shape
+    var s: Shape2D = shape_node.shape
     if s is CircleShape2D:
         return (s as CircleShape2D).radius
     if s is RectangleShape2D:
-        var ext := (s as RectangleShape2D).size * 0.5
+        var ext: Vector2 = (s as RectangleShape2D).size * 0.5
         return maxf(ext.x, ext.y)
 
     return 34.0

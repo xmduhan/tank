@@ -37,8 +37,8 @@ func shoot(target: CharacterBody2D) -> void:
     if not is_instance_valid(target):
         return
 
-    var start_pos := _get_muzzle_global_position()
-    var end_pos := target.global_position
+    var start_pos: Vector2 = _get_muzzle_global_position()
+    var end_pos: Vector2 = target.global_position
 
     _aim_turret_at(end_pos)
 
@@ -47,8 +47,8 @@ func shoot(target: CharacterBody2D) -> void:
         _spawn_hit_explosion(end_pos)
         return
 
-    var trail := bullet_trail_scene.instantiate()
-    var world := SceneTreeUtils.safe_world(_host)
+    var trail: Node = bullet_trail_scene.instantiate()
+    var world: Node = SceneTreeUtils.safe_world(_host)
     if world == null:
         return
 
@@ -84,11 +84,11 @@ func _spawn_hit_explosion(pos: Vector2) -> void:
     if hit_explosion_scene == null:
         return
 
-    var fx := hit_explosion_scene.instantiate() as Node2D
+    var fx: Node2D = hit_explosion_scene.instantiate() as Node2D
     if fx == null:
         return
 
-    var world := SceneTreeUtils.safe_world(_host)
+    var world: Node = SceneTreeUtils.safe_world(_host)
     if world == null:
         return
 
@@ -103,5 +103,5 @@ func _aim_turret_at(world_pos: Vector2) -> void:
 
 
 func _get_muzzle_global_position() -> Vector2:
-    var forward := Vector2.RIGHT.rotated(_turret.global_rotation)
+    var forward: Vector2 = Vector2.RIGHT.rotated(_turret.global_rotation)
     return _turret.global_position + forward * muzzle_offset.x + forward.orthogonal() * muzzle_offset.y

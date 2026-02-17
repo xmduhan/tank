@@ -37,14 +37,13 @@ class_name EnemyAIController
 
 var _chase_target: CharacterBody2D = null
 var _retarget_t: float = 0.0
-
 var _fire_t: float = 0.0
 
 var _jitter_t: float = 0.0
 var _jitter: Vector2 = Vector2.ZERO
 
 var _bounds: Rect2 = Rect2()
-var _rng := RandomNumberGenerator.new()
+var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 var _aim_target: CharacterBody2D = null
 var _aim_elapsed: float = 0.0
@@ -54,12 +53,14 @@ var _wander_dir: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
+    process_mode = Node.PROCESS_MODE_PAUSABLE
+
     assert(_host != null)
     assert(_move != null, "EnemyAIController: missing sibling 'movable'(MoveComponent).")
     assert(_shoot != null, "EnemyAIController: missing sibling 'shoot'(ShootComponent).")
     assert(_targeting != null, "EnemyAIController: missing sibling 'targeting'(TargetingComponent).")
 
-    _move.speed = 50
+    _move.speed = 50.0
     _rng.randomize()
     _pick_new_wander_dir()
 
@@ -69,8 +70,8 @@ func _physics_process(delta: float) -> void:
     _update_jitter_if_needed()
     _update_world_bounds()
 
-    var target_in_range := _get_target_in_range()
-    var has_target_in_range := is_instance_valid(target_in_range)
+    var target_in_range: CharacterBody2D = _get_target_in_range()
+    var has_target_in_range: bool = is_instance_valid(target_in_range)
 
     if has_target_in_range:
         _update_chase_target_if_needed()
@@ -78,7 +79,7 @@ func _physics_process(delta: float) -> void:
         _chase_target = null
         _update_wander_if_needed()
 
-    var move_dir := _compute_desired_move_direction(has_target_in_range)
+    var move_dir: Vector2 = _compute_desired_move_direction(has_target_in_range)
     _move.direction = _to_cardinal(_bounded_direction(move_dir))
 
     _update_aim_and_fire(delta, target_in_range)
@@ -129,34 +130,34 @@ func _update_chase_target_if_needed() -> void:
 
 
 func _update_world_bounds() -> void:
-    var vp := get_viewport()
+    var vp: Viewport = get_viewport()
     if vp == null:
         return
 
-    var visible := WorldBounds.get_visible_world_rect(vp)
+    var visible: Rect2 = WorldBounds.get_visible_world_rect(vp)
     if visible.size.length() <= 1.0:
         return
 
-    var inset := _compute_inset_margin()
+    var inset: Vector2 = _compute_inset_margin()
     _bounds = WorldBounds.inset_rect(visible, inset)
 
 
 func _compute_inset_margin() -> Vector2:
-    var host_radius := _estimate_host_radius()
-    var m := maxf(screen_margin, 0.0) + host_radius
+    var host_radius: float = _estimate_host_radius()
+    var m: float = maxf(screen_margin, 0.0) + host_radius
     return Vector2(m, m)
 
 
 func _estimate_host_radius() -> float:
-    var shape_node := _host.get_node_or_null("shape") as CollisionShape2D
+    var shape_node: CollisionShape2D = _host.get_node_or_null("shape") as CollisionShape2D
     if shape_node == null or shape_node.shape == null:
         return 34.0
 
-    var s := shape_node.shape
+    var s: Shape2D = shape_node.shape
     if s is CircleShape2D:
         return (s as CircleShape2D).radius
     if s is RectangleShape2D:
-        var ext := (s as RectangleShape2D).size * 0.5
+        var ext: Vector2 = (s as RectangleShape2D).size * 0.5
         return maxf(ext.x, ext.y)
 
     return 34.0
@@ -167,7 +168,7 @@ func _compute_desired_move_direction(has_target_in_range: bool) -> Vector2:
         return _wander_dir
 
     if is_instance_valid(_chase_target):
-        var to_target := _chase_target.global_position - _host.global_position
+        var to_target: Vector2 = _chase_target.global_position - _host.global_position
         if to_target.length() <= stop_distance:
             return Vector2.ZERO
         return (to_target.normalized() + _jitter).normalized()
@@ -221,8 +222,8 @@ func _bounded_direction(dir: Vector2) -> Vector2:
     if _bounds.size.length() <= 1.0:
         return dir.normalized()
 
-    var pos := _host.global_position
-    var steer := Vector2(
+    var pos: Vector2 = _host.global_position
+    var steer: Vector2 = Vector2(
         _axis_steer(pos.x, _bounds.position.x, _bounds.end.x),
         _axis_steer(pos.y, _bounds.position.y, _bounds.end.y)
     )
@@ -230,18 +231,18 @@ func _bounded_direction(dir: Vector2) -> Vector2:
     if steer.length() <= 0.001:
         return dir.normalized()
 
-    var mixed := dir.normalized() + steer * bounds_steer_strength
+    var mixed: Vector2 = dir.normalized() + steer * bounds_steer_strength
     return mixed.normalized() if mixed.length() > 0.001 else steer.normalized()
 
 
 func _axis_steer(v: float, min_v: float, max_v: float) -> float:
-    var zone := maxf(bounds_soft_zone, 1.0)
+    var zone: float = maxf(bounds_soft_zone, 1.0)
 
-    var d_left := v - min_v
+    var d_left: float = v - min_v
     if d_left < zone:
         return _falloff((zone - d_left) / zone)
 
-    var d_right := max_v - v
+    var d_right: float = max_v - v
     if d_right < zone:
         return -_falloff((zone - d_right) / zone)
 
@@ -249,7 +250,7 @@ func _axis_steer(v: float, min_v: float, max_v: float) -> float:
 
 
 func _falloff(t: float) -> float:
-    var x := clampf(t, 0.0, 1.0)
+    var x: float = clampf(t, 0.0, 1.0)
     return x * x
 
 
@@ -257,8 +258,8 @@ func _to_cardinal(v: Vector2) -> Vector2:
     if v.length() <= 0.001:
         return Vector2.ZERO
 
-    var ax := absf(v.x)
-    var ay := absf(v.y)
+    var ax: float = absf(v.x)
+    var ay: float = absf(v.y)
 
     if ax >= ay:
         return Vector2(signf(v.x), 0.0)
@@ -266,19 +267,19 @@ func _to_cardinal(v: Vector2) -> Vector2:
 
 
 func _find_nearest_player() -> CharacterBody2D:
-    var players := get_tree().get_nodes_in_group(player_group)
+    var players: Array[Node] = get_tree().get_nodes_in_group(player_group)
     if players.is_empty():
         return null
 
     var best: CharacterBody2D = null
     var best_d2: float = INF
-    var o := _host.global_position
+    var o: Vector2 = _host.global_position
 
     for n in players:
-        var p := n as CharacterBody2D
+        var p: CharacterBody2D = n as CharacterBody2D
         if p == null or not is_instance_valid(p):
             continue
-        var d2 := o.distance_squared_to(p.global_position)
+        var d2: float = o.distance_squared_to(p.global_position)
         if d2 < best_d2:
             best_d2 = d2
             best = p
@@ -287,5 +288,5 @@ func _find_nearest_player() -> CharacterBody2D:
 
 
 func _random_unit() -> Vector2:
-    var a := _rng.randf() * TAU
+    var a: float = _rng.randf() * TAU
     return Vector2(cos(a), sin(a))

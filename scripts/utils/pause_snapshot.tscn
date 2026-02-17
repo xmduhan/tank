@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/utils/pause_snapshot.gd" id="1_pause_snapshot_gd"]
+
+[node name="PauseSnapshot" type="Node"]
+script = ExtResource("1_pause_snapshot_gd")

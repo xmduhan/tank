@@ -44,6 +44,8 @@ var _font: Font = null
 
 
 func _ready() -> void:
+    process_mode = Node.PROCESS_MODE_ALWAYS
+
     visible = false
     top_level = true
     set_process(true)
@@ -258,9 +260,6 @@ func _draw() -> void:
     draw_string(f, Vector2(base_x, hint_y), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, h_fs, hint_color)
 
 
-# ─── Draw Helpers ─────────────────────────────────────────
-
-## Godot 4 没有 draw_round_rect()；用 StyleBoxFlat 画圆角矩形（并支持描边）。
 func _draw_round_rect(rect: Rect2, radius: float, color: Color, filled: bool = true, border_width: float = 1.0) -> void:
     radius = maxf(radius, 0.0)
 

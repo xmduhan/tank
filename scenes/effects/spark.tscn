@@ -1,6 +1,6 @@
-[gd_scene format=3 load_steps=4 uid="uid://c0hitexplosion0001"]
+[gd_scene format=3 uid="uid://y4kgxqpxcm53"]
 
-[ext_resource type="Script" path="res://scenes/effects/hit_explosion.gd" id="1_hit_explosion_gd"]
+[ext_resource type="Script" uid="uid://cbpafldifl5bo" path="res://scenes/effects/spark.gd" id="1_hit_explosion_gd"]
 
 [sub_resource type="Gradient" id="Gradient_sparks"]
 offsets = PackedFloat32Array(0, 0.6, 1)

@@ -14,7 +14,7 @@ class_name ShootComponent
 
 @export_group("Effects")
 @export var bullet_trail_scene: PackedScene = preload("res://scenes/effects/bullet_trail.tscn")
-@export var hit_explosion_scene: PackedScene = preload("res://scenes/effects/hit_explosion.tscn")
+@export var hit_explosion_scene: PackedScene = preload("res://scenes/effects/explosion.tscn")
 
 var _host: Node2D
 var _turret: Node2D

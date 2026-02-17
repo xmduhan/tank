@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://yy5ndgovmkl1"]
 
-[ext_resource type="Script" path="res://scenes/effects/tank_explosion.gd" id="1_tank_explosion_gd"]
+[ext_resource type="Script" uid="uid://dm2on5b3vi2c8" path="res://scenes/effects/explosion.gd" id="1_tank_explosion_gd"]
 
 [sub_resource type="Gradient" id="Gradient_fire"]
 offsets = PackedFloat32Array(0, 0.5, 1)

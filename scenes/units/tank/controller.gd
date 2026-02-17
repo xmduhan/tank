@@ -1,7 +1,7 @@
 extends Node
 ## 玩家坦克控制器：负责将输入转化为移动指令；空格触发答题，答对后才射击。
 
-const TARGET_MATH_PROMPT_SCENE: PackedScene = preload("res://scenes/ui/target_math_prompt_drawn.tscn")
+const TARGET_MATH_PROMPT_SCENE: PackedScene = preload("res://scenes/ui/aim.tscn")
 
 @onready var _move: MoveComponent = get_parent().get_node("movable") as MoveComponent
 @onready var _attack_range: Area2D = get_parent().get_node_or_null("targeting")

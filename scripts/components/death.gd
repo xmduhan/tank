@@ -5,7 +5,7 @@ class_name DeathFxComponent
 ## - 在宿主位置生成殉爆特效
 ## - 可选：销毁宿主
 
-@export var explosion_scene: PackedScene = preload("res://scenes/effects/tank_explosion.tscn")
+@export var explosion_scene: PackedScene = preload("res://scenes/effects/explosion.tscn")
 @export var free_host_on_death: bool = true
 
 var _host: Node2D

@@ -9,6 +9,8 @@ signal answered_correct
 signal answered_wrong
 signal canceled
 
+const QUESTION_PREFIX: String = "射击诸元: "
+
 @export var max_operand: int = 10
 @export var y_offset: float = 85.0
 
@@ -23,14 +25,16 @@ signal canceled
 @export var hint_font_size: int = 30
 @export var padding: Vector2 = Vector2(30.0, 22.0)
 @export var corner_radius: float = 18.0
-@export var panel_color: Color = Color(0.06, 0.06, 0.08, 0.82)
-@export var border_color: Color = Color(1, 1, 1, 0.18)
-@export var text_color: Color = Color(0.95, 0.95, 0.95, 1.0)
-@export var hint_color: Color = Color(1, 1, 1, 0.55)
 
-## 输入框背景色：alpha=0 即完全透明
-@export var input_bg: Color = Color(0, 0, 0, 0.0)
-@export var input_border: Color = Color(1, 1, 1, 0.22)
+## 提升整体透明度（更不透明、更“实”）
+@export var panel_color: Color = Color(0.06, 0.06, 0.08, 0.93)
+@export var border_color: Color = Color(1, 1, 1, 0.24)
+@export var text_color: Color = Color(0.95, 0.95, 0.95, 1.0)
+@export var hint_color: Color = Color(1, 1, 1, 0.68)
+
+## 输入框背景色：提高 alpha 让输入框更明显
+@export var input_bg: Color = Color(0.02, 0.02, 0.03, 0.55)
+@export var input_border: Color = Color(1, 1, 1, 0.32)
 @export var caret_color: Color = Color(1, 1, 1, 0.9)
 
 var _expected: int = 0
@@ -206,11 +210,15 @@ func _keycode_to_digit(keycode: int) -> int:
         _: return -1
 
 
+func _question_text() -> String:
+    return "%s%s" % [QUESTION_PREFIX, _question]
+
+
 func _draw() -> void:
     if not _active:
         return
 
-    var question: String = _question
+    var question: String = _question_text()
     var answer: String = _typed
     var hint: String = "Enter 提交  Esc 取消  Backspace 删除"
 

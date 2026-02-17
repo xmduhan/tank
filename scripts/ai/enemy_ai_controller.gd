@@ -1,10 +1,11 @@
 extends Node
 class_name EnemyAIController
-## 敌人 AI（节奏重置版）：
+## 敌人 AI（角落出生 + 无目标随机游走）：
 ## - 四向移动（不斜走）
-## - 目标进入射程后，持续瞄准 aim_time 秒才允许发射
-## - 仅当“射程内存在目标(targeting.current_target)”时才追击/开火
-## - 取消“走0.1秒停0.2秒”的节拍器规则（连续移动）
+## - 目标进入射程后：持续瞄准 aim_time 秒才允许发射
+## - 仅当“射程内存在锁定目标(targeting.current_target)”时才追击/开火
+## - 无锁定目标时：随机游走（四方向，周期性换向）
+## - 屏幕边界软回正，避免出屏
 
 const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 
@@ -16,6 +17,10 @@ const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 @export var stop_distance: float = 220.0
 @export var jitter_strength: float = 0.18
 @export var jitter_interval: float = 0.9
+
+@export_group("Wander")
+@export var wander_change_interval: float = 1.2
+@export var wander_idle_chance: float = 0.08
 
 @export_group("Combat")
 @export var fire_cooldown: float = 0.7
@@ -45,6 +50,9 @@ var _rng := RandomNumberGenerator.new()
 var _aim_target: CharacterBody2D = null
 var _aim_elapsed: float = 0.0
 
+var _wander_t: float = 0.0
+var _wander_dir: Vector2 = Vector2.ZERO
+
 
 func _ready() -> void:
     assert(_host != null)
@@ -52,10 +60,9 @@ func _ready() -> void:
     assert(_shoot != null, "EnemyAIController: missing sibling 'shoot'(ShootComponent).")
     assert(_targeting != null, "EnemyAIController: missing sibling 'targeting'(TargetingComponent).")
 
-    # AI move speed is fixed to 100; player keeps MoveComponent default (200)
     _move.speed = 50
-
     _rng.randomize()
+    _pick_new_wander_dir()
 
 
 func _physics_process(delta: float) -> void:
@@ -70,6 +77,7 @@ func _physics_process(delta: float) -> void:
         _update_chase_target_if_needed()
     else:
         _chase_target = null
+        _update_wander_if_needed()
 
     var move_dir := _compute_desired_move_direction(has_target_in_range)
     _move.direction = _to_cardinal(_bounded_direction(move_dir))
@@ -81,6 +89,7 @@ func _tick(delta: float) -> void:
     _retarget_t -= delta
     _fire_t -= delta
     _jitter_t -= delta
+    _wander_t -= delta
 
 
 func _update_jitter_if_needed() -> void:
@@ -88,6 +97,29 @@ func _update_jitter_if_needed() -> void:
         return
     _jitter_t = maxf(jitter_interval, 0.01)
     _jitter = _random_unit() * jitter_strength
+
+
+func _update_wander_if_needed() -> void:
+    if _wander_t > 0.0 and _wander_dir != Vector2.ZERO:
+        return
+    _wander_t = maxf(wander_change_interval, 0.1)
+    _pick_new_wander_dir()
+
+
+func _pick_new_wander_dir() -> void:
+    if _rng.randf() < clampf(wander_idle_chance, 0.0, 1.0):
+        _wander_dir = Vector2.ZERO
+        return
+
+    match _rng.randi_range(0, 3):
+        0:
+            _wander_dir = Vector2.RIGHT
+        1:
+            _wander_dir = Vector2.LEFT
+        2:
+            _wander_dir = Vector2.DOWN
+        _:
+            _wander_dir = Vector2.UP
 
 
 func _update_chase_target_if_needed() -> void:
@@ -133,7 +165,7 @@ func _estimate_host_radius() -> float:
 
 func _compute_desired_move_direction(has_target_in_range: bool) -> Vector2:
     if not has_target_in_range:
-        return Vector2.ZERO
+        return _wander_dir
 
     if is_instance_valid(_chase_target):
         var to_target := _chase_target.global_position - _host.global_position

@@ -7,6 +7,7 @@ class_name EnemySpawner
 @export_group("Spawn Area")
 @export var spawn_rect: Rect2 = Rect2(Vector2(520, 120), Vector2(220, 360))
 @export var spawn_margin: float = 24.0
+@export var corner_inset: float = 36.0
 
 
 func _ready() -> void:
@@ -25,7 +26,7 @@ func _ensure_enemy_count() -> void:
         return
 
     var enemies := _get_enemies(world)
-    var missing:int = max(desired_enemy_count - enemies.size(), 0)
+    var missing: int = max(desired_enemy_count - enemies.size(), 0)
     for _i in range(missing):
         _spawn_one(world)
 
@@ -47,7 +48,7 @@ func _spawn_one(world: Node) -> void:
         return
 
     world.add_child(enemy)
-    enemy.global_position = _random_spawn_position()
+    enemy.global_position = _corner_spawn_position()
 
     enemy.tree_exited.connect(_on_enemy_exited)
 
@@ -56,16 +57,37 @@ func _on_enemy_exited() -> void:
     call_deferred("_ensure_enemy_count")
 
 
-func _random_spawn_position() -> Vector2:
-    var rect := spawn_rect
+func _corner_spawn_position() -> Vector2:
+    var rect := _safe_rect(spawn_rect, spawn_margin)
+    var inset := maxf(corner_inset, 0.0)
 
-    var m := maxf(spawn_margin, 0.0)
+    var corners := [
+        rect.position,
+        Vector2(rect.end.x, rect.position.y),
+        Vector2(rect.position.x, rect.end.y),
+        rect.end,
+    ]
+
+    var idx := randi() % 4
+    var c: Vector2 = corners[idx]
+
+    var sx := 1.0 if (c.x <= rect.position.x + 0.001) else -1.0
+    var sy := 1.0 if (c.y <= rect.position.y + 0.001) else -1.0
+
+    var p := c + Vector2(inset * sx, inset * sy)
+    return WorldBounds.clamp_point_to_rect(p, rect)
+
+
+func _safe_rect(r: Rect2, margin: float) -> Rect2:
+    var rect := r
+    var m := maxf(margin, 0.0)
     rect.position += Vector2(m, m)
     rect.size -= Vector2(m * 2.0, m * 2.0)
 
     if rect.size.x <= 1.0 or rect.size.y <= 1.0:
-        rect = Rect2(spawn_rect.position, Vector2(maxf(spawn_rect.size.x, 2.0), maxf(spawn_rect.size.y, 2.0)))
+        rect = Rect2(r.position, Vector2(maxf(r.size.x, 2.0), maxf(r.size.y, 2.0)))
 
-    var x := randf_range(rect.position.x, rect.position.x + rect.size.x)
-    var y := randf_range(rect.position.y, rect.position.y + rect.size.y)
-    return Vector2(x, y)
+    return rect
+
+
+const WorldBounds := preload("res://scripts/utils/world_bounds.gd")

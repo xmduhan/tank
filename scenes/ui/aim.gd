@@ -27,7 +27,9 @@ signal canceled
 @export var border_color: Color = Color(1, 1, 1, 0.18)
 @export var text_color: Color = Color(0.95, 0.95, 0.95, 1.0)
 @export var hint_color: Color = Color(1, 1, 1, 0.55)
-@export var input_bg: Color = Color(0, 0, 0, 0.35)
+
+## 输入框背景色：alpha=0 即完全透明
+@export var input_bg: Color = Color(0, 0, 0, 0.0)
 @export var input_border: Color = Color(1, 1, 1, 0.22)
 @export var caret_color: Color = Color(1, 1, 1, 0.9)
 
@@ -239,8 +241,8 @@ func _draw() -> void:
         base_y - q_size.y + (q_size.y - input_height) * 0.5
     )
     var input_rect: Rect2 = Rect2(input_pos, Vector2(input_width, input_height))
-    _draw_round_rect(input_rect, 12.0, input_bg)
-    _draw_round_rect(input_rect, 12.0, input_border, false, 1.0)
+
+    _draw_input_box(input_rect)
 
     var a_fs: int = q_fs
     var text_inset: Vector2 = Vector2(14.0, (input_height + a_fs) * 0.5 - 6.0)
@@ -258,6 +260,12 @@ func _draw() -> void:
 
     var hint_y: float = rect.position.y + padding.y + maxf(q_size.y, input_height) + 14.0 + h_size.y
     draw_string(f, Vector2(base_x, hint_y), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, h_fs, hint_color)
+
+
+func _draw_input_box(input_rect: Rect2) -> void:
+    if input_bg.a > 0.001:
+        _draw_round_rect(input_rect, 12.0, input_bg)
+    _draw_round_rect(input_rect, 12.0, input_border, false, 1.0)
 
 
 func _draw_round_rect(rect: Rect2, radius: float, color: Color, filled: bool = true, border_width: float = 1.0) -> void:

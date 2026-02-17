@@ -2,10 +2,15 @@ extends Node
 ## 玩家坦克控制器：负责将输入转化为移动指令；空格触发答题，答对后才射击。
 
 const TARGET_MATH_PROMPT_SCENE: PackedScene = preload("res://scenes/ui/aim.tscn")
+const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 
-@onready var _move: MoveComponent = get_parent().get_node("movable") as MoveComponent
-@onready var _attack_range: Area2D = get_parent().get_node_or_null("targeting")
-@onready var _shoot: ShootComponent = get_parent().get_node_or_null("shoot") as ShootComponent
+@export_group("Screen Bounds")
+@export var screen_margin: float = 18.0
+
+@onready var _host: CharacterBody2D = get_parent() as CharacterBody2D
+@onready var _move: MoveComponent = _host.get_node("movable") as MoveComponent
+@onready var _attack_range: Area2D = _host.get_node_or_null("targeting")
+@onready var _shoot: ShootComponent = _host.get_node_or_null("shoot") as ShootComponent
 
 var _math_prompt: TargetMathPromptDrawn
 var _pending_shot_target: CharacterBody2D = null
@@ -13,6 +18,7 @@ var _asking: bool = false
 
 
 func _ready() -> void:
+    assert(_host != null, "Controller: host 必须是 CharacterBody2D。")
     assert(_move != null, "Controller: 未找到兄弟节点 'movable'(MoveComponent)。")
     assert(_shoot != null, "Controller: 未找到兄弟节点 'shoot'(ShootComponent)。")
     _ensure_math_prompt()
@@ -36,6 +42,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(_delta: float) -> void:
     _move.direction = _get_movement_direction()
+    _clamp_to_screen_bounds()
+
+
+func _clamp_to_screen_bounds() -> void:
+    var vp := get_viewport()
+    if vp == null:
+        return
+    WorldBounds.clamp_body_to_visible_rect(_host, vp, screen_margin)
 
 
 func _get_movement_direction() -> Vector2:

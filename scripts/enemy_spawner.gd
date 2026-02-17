@@ -7,7 +7,7 @@ const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 @export var desired_enemy_count: int = 4
 
 @export_group("Respawn")
-@export var respawn_delay_seconds: float = 15.0
+@export var respawn_delay_seconds: float = 5.0
 
 @export_group("Spawn Area (legacy)")
 @export var spawn_rect: Rect2 = Rect2(Vector2(520, 120), Vector2(220, 360))
@@ -57,7 +57,7 @@ func _ensure_enemy_count() -> void:
         return
 
     var alive := _get_enemies(world).size()
-    var missing:int = max(desired_enemy_count - alive - _pending_respawns, 0)
+    var missing: int = max(desired_enemy_count - alive - _pending_respawns, 0)
     if missing <= 0:
         return
 

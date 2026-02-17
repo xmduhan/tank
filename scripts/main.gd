@@ -14,6 +14,7 @@ var _end_panel: PanelContainer
 
 
 func _ready() -> void:
+    process_mode = Node.PROCESS_MODE_ALWAYS
     randomize()
     _build_end_ui()
 
@@ -83,11 +84,11 @@ func _find_player() -> CharacterBody2D:
 
 
 func _on_victory() -> void:
-    _end_game("Victory!\nAll enemies destroyed.\n\nPress SPACE to restart")
+    _end_game("胜利！\n已消灭全部敌人。\n\n按空格键重新开始")
 
 
 func _on_defeat() -> void:
-    _end_game("Defeat!\nPlayer destroyed.\n\nPress SPACE to restart")
+    _end_game("失败！\n玩家已被摧毁。\n\n按空格键重新开始")
 
 
 func _end_game(message: String) -> void:

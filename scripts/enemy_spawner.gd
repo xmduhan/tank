@@ -1,65 +1,136 @@
 extends Node
 class_name EnemySpawner
 
+const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
+
 @export var enemy_scene: PackedScene = preload("res://scenes/units/tank/enemy.tscn")
 @export var desired_enemy_count: int = 4
 
-@export_group("Spawn Area")
+@export_group("Respawn")
+@export var respawn_delay_seconds: float = 15.0
+
+@export_group("Spawn Area (legacy)")
 @export var spawn_rect: Rect2 = Rect2(Vector2(520, 120), Vector2(220, 360))
 @export var spawn_margin: float = 24.0
 @export var corner_inset: float = 36.0
 
+var _pending_respawns: int = 0
+var _respawn_timer: SceneTreeTimer = null
+
 
 func _ready() -> void:
     assert(enemy_scene != null, "EnemySpawner: enemy_scene is null.")
-    call_deferred("_ensure_enemy_count")
+    call_deferred("_bootstrap")
 
 
-func _ensure_enemy_count() -> void:
+func _bootstrap() -> void:
     if not is_inside_tree():
         return
 
-    var world: Node = get_tree().current_scene
-    if world == null:
-        world = get_parent()
+    var world := _world()
     if world == null:
         return
 
-    var enemies := _get_enemies(world)
-    var missing: int = max(desired_enemy_count - enemies.size(), 0)
-    for _i in range(missing):
-        _spawn_one(world)
+    for e in _get_enemies(world):
+        _wire_enemy(e)
+
+    _ensure_enemy_count()
+
+
+func _world() -> Node:
+    var world: Node = get_tree().current_scene
+    return world if world != null else get_parent()
 
 
 func _get_enemies(root: Node) -> Array[Node2D]:
     var out: Array[Node2D] = []
     for n in root.get_children():
-        if n is Node2D and (n as Node2D).is_in_group("enemy"):
-            out.append(n as Node2D)
+        var e := n as Node2D
+        if e != null and e.is_in_group("enemy"):
+            out.append(e)
     return out
 
 
-func _spawn_one(world: Node) -> void:
-    if enemy_scene == null:
+func _ensure_enemy_count() -> void:
+    var world := _world()
+    if world == null:
         return
 
+    var alive := _get_enemies(world).size()
+    var missing:int = max(desired_enemy_count - alive - _pending_respawns, 0)
+    if missing <= 0:
+        return
+
+    _pending_respawns += missing
+    _schedule_next_respawn_if_needed()
+
+
+func _schedule_next_respawn_if_needed() -> void:
+    if _pending_respawns <= 0:
+        return
+    if _respawn_timer != null:
+        return
+
+    var delay := maxf(respawn_delay_seconds, 0.0)
+    _respawn_timer = get_tree().create_timer(delay)
+    _respawn_timer.timeout.connect(_on_respawn_timeout)
+
+
+func _on_respawn_timeout() -> void:
+    _respawn_timer = null
+
+    var world := _world()
+    if world == null:
+        return
+
+    var alive := _get_enemies(world).size()
+    if alive >= desired_enemy_count:
+        _pending_respawns = 0
+        return
+
+    if _pending_respawns <= 0:
+        _ensure_enemy_count()
+        return
+
+    _spawn_one(world)
+    _pending_respawns = max(_pending_respawns - 1, 0)
+    _schedule_next_respawn_if_needed()
+
+
+func _spawn_one(world: Node) -> void:
     var enemy := enemy_scene.instantiate() as Node2D
     if enemy == null:
         return
 
     world.add_child(enemy)
-    enemy.global_position = _corner_spawn_position()
+    enemy.global_position = _screen_corner_spawn_position(enemy)
 
-    enemy.tree_exited.connect(_on_enemy_exited)
+    _wire_enemy(enemy)
+
+
+func _wire_enemy(enemy: Node2D) -> void:
+    if enemy == null:
+        return
+    if not enemy.tree_exited.is_connected(_on_enemy_exited):
+        enemy.tree_exited.connect(_on_enemy_exited)
 
 
 func _on_enemy_exited() -> void:
-    call_deferred("_ensure_enemy_count")
+    _ensure_enemy_count()
 
 
-func _corner_spawn_position() -> Vector2:
-    var rect := _safe_rect(spawn_rect, spawn_margin)
-    var inset := maxf(corner_inset, 0.0)
+func _screen_corner_spawn_position(enemy: Node2D) -> Vector2:
+    var vp := get_viewport()
+    if vp == null:
+        return Vector2.ZERO
+
+    var visible := WorldBounds.get_visible_world_rect(vp)
+    if visible.size.length() <= 1.0:
+        return Vector2.ZERO
+
+    var r := _estimate_radius(enemy)
+    var inset := maxf(corner_inset, 0.0) + maxf(spawn_margin, 0.0) + r
+    var rect := WorldBounds.inset_rect(visible, Vector2(inset, inset))
 
     var corners := [
         rect.position,
@@ -68,26 +139,22 @@ func _corner_spawn_position() -> Vector2:
         rect.end,
     ]
 
-    var idx := randi() % 4
-    var c: Vector2 = corners[idx]
-
-    var sx := 1.0 if (c.x <= rect.position.x + 0.001) else -1.0
-    var sy := 1.0 if (c.y <= rect.position.y + 0.001) else -1.0
-
-    var p := c + Vector2(inset * sx, inset * sy)
-    return WorldBounds.clamp_point_to_rect(p, rect)
+    return corners[randi() % corners.size()]
 
 
-func _safe_rect(r: Rect2, margin: float) -> Rect2:
-    var rect := r
-    var m := maxf(margin, 0.0)
-    rect.position += Vector2(m, m)
-    rect.size -= Vector2(m * 2.0, m * 2.0)
+func _estimate_radius(body: Node2D) -> float:
+    if body == null:
+        return 34.0
 
-    if rect.size.x <= 1.0 or rect.size.y <= 1.0:
-        rect = Rect2(r.position, Vector2(maxf(r.size.x, 2.0), maxf(r.size.y, 2.0)))
+    var shape_node := body.get_node_or_null("shape") as CollisionShape2D
+    if shape_node == null or shape_node.shape == null:
+        return 34.0
 
-    return rect
+    var s := shape_node.shape
+    if s is CircleShape2D:
+        return (s as CircleShape2D).radius
+    if s is RectangleShape2D:
+        var ext := (s as RectangleShape2D).size * 0.5
+        return maxf(ext.x, ext.y)
 
-
-const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
+    return 34.0

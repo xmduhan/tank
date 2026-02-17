@@ -3,7 +3,7 @@ class_name TargetMathPromptDrawn
 ## 纯帧绘制的答题提示（无 GUI 控件）：
 ## - _draw 绘制题目与输入框
 ## - _unhandled_input 捕获数字/退格/回车/ESC
-## - 跟随目标位置
+## - 可选：固定屏幕居中 or 跟随目标位置
 
 signal answered_correct
 signal answered_wrong
@@ -11,6 +11,12 @@ signal canceled
 
 @export var max_operand: int = 10
 @export var y_offset: float = 85.0
+
+@export_group("Layout")
+@export var center_on_screen: bool = true
+@export var input_width: float = 78.0
+@export var input_height: float = 24.0
+@export var caret_blink_hz: float = 2.8
 
 @export_group("Style")
 @export var font_size: int = 18
@@ -24,11 +30,6 @@ signal canceled
 @export var input_border: Color = Color(1, 1, 1, 0.22)
 @export var caret_color: Color = Color(1, 1, 1, 0.9)
 
-@export_group("Layout")
-@export var input_width: float = 78.0
-@export var input_height: float = 24.0
-@export var caret_blink_hz: float = 2.8
-
 var _expected: int = 0
 var _question: String = ""
 var _typed: String = ""
@@ -38,7 +39,7 @@ var _target: Node2D = null
 
 var _caret_phase: float = 0.0
 
-var _font: Font
+var _font: Font = null
 
 
 func _ready() -> void:
@@ -47,7 +48,7 @@ func _ready() -> void:
     set_process(true)
     set_process_unhandled_input(true)
 
-    var df := ThemeDB.fallback_font
+    var df: Font = ThemeDB.fallback_font
     if df != null:
         _font = df
 
@@ -80,7 +81,7 @@ func _process(delta: float) -> void:
     if not _active:
         return
 
-    if not is_instance_valid(_target):
+    if (not center_on_screen) and (not is_instance_valid(_target)):
         hide_prompt()
         canceled.emit()
         return
@@ -96,7 +97,7 @@ func _unhandled_input(event: InputEvent) -> void:
         return
 
     if event is InputEventKey and event.pressed:
-        var k := event as InputEventKey
+        var k: InputEventKey = event as InputEventKey
 
         if k.keycode == KEY_ESCAPE:
             hide_prompt()
@@ -116,7 +117,7 @@ func _unhandled_input(event: InputEvent) -> void:
             get_viewport().set_input_as_handled()
             return
 
-        var digit := _keycode_to_digit(k.keycode)
+        var digit: int = _keycode_to_digit(k.keycode)
         if digit != -1:
             if _typed.length() < 6:
                 _typed += str(digit)
@@ -126,7 +127,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _submit_if_possible() -> void:
-    var s := _typed.strip_edges()
+    var s: String = _typed.strip_edges()
     if s.is_empty():
         answered_wrong.emit()
         return
@@ -136,7 +137,7 @@ func _submit_if_possible() -> void:
         answered_wrong.emit()
         return
 
-    var v := int(s)
+    var v: int = int(s)
     if v == _expected:
         hide_prompt()
         answered_correct.emit()
@@ -147,15 +148,29 @@ func _submit_if_possible() -> void:
 
 
 func _update_position() -> void:
+    if center_on_screen:
+        _update_position_centered()
+        return
+    _update_position_follow_target()
+
+
+func _update_position_centered() -> void:
+    var vp: Viewport = get_viewport()
+    if vp == null:
+        return
+    global_position = vp.get_visible_rect().get_center()
+
+
+func _update_position_follow_target() -> void:
     if not is_instance_valid(_target):
         return
     global_position = _target.global_position + Vector2(0.0, -y_offset)
 
 
 func _generate_question() -> void:
-    var a := randi_range(0, max_operand)
-    var b := randi_range(0, max_operand)
-    var is_add := (randi() % 2) == 0
+    var a: int = randi_range(0, max_operand)
+    var b: int = randi_range(0, max_operand)
+    var is_add: bool = (randi() % 2) == 0
 
     if is_add:
         _expected = a + b
@@ -163,7 +178,7 @@ func _generate_question() -> void:
         return
 
     if a < b:
-        var tmp := a
+        var tmp: int = a
         a = b
         b = tmp
     _expected = a - b
@@ -189,63 +204,63 @@ func _draw() -> void:
     if not _active:
         return
 
-    var question := _question
-    var answer := _typed
-    var hint := "Enter 提交  Esc 取消  Backspace 删除"
+    var question: String = _question
+    var answer: String = _typed
+    var hint: String = "Enter 提交  Esc 取消  Backspace 删除"
 
-    var f := _font
+    var f: Font = _font
     if f == null:
         return
 
-    var q_size := f.get_string_size(question, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-    var h_size := f.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, int(max(12, font_size - 4)))
+    var q_size: Vector2 = f.get_string_size(question, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+    var h_size: Vector2 = f.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, int(max(12, font_size - 4)))
 
-    var panel_w := padding.x * 2.0 + q_size.x + 8.0 + input_width
-    var panel_h := padding.y * 2.0 + maxf(q_size.y, input_height) + 6.0 + h_size.y
+    var panel_w: float = padding.x * 2.0 + q_size.x + 8.0 + input_width
+    var panel_h: float = padding.y * 2.0 + maxf(q_size.y, input_height) + 6.0 + h_size.y
 
-    var rect := Rect2(Vector2(-panel_w * 0.5, -panel_h * 0.5), Vector2(panel_w, panel_h))
+    var rect: Rect2 = Rect2(Vector2(-panel_w * 0.5, -panel_h * 0.5), Vector2(panel_w, panel_h))
     _draw_round_rect(rect, corner_radius, panel_color)
     _draw_round_rect(rect, corner_radius, border_color, false, 1.0)
 
-    var base_x := rect.position.x + padding.x
-    var base_y := rect.position.y + padding.y + q_size.y
+    var base_x: float = rect.position.x + padding.x
+    var base_y: float = rect.position.y + padding.y + q_size.y
 
     draw_string(f, Vector2(base_x, base_y), question, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, text_color)
 
-    var input_pos := Vector2(base_x + q_size.x + 8.0, base_y - q_size.y + (q_size.y - input_height) * 0.5)
-    var input_rect := Rect2(input_pos, Vector2(input_width, input_height))
+    var input_pos: Vector2 = Vector2(base_x + q_size.x + 8.0, base_y - q_size.y + (q_size.y - input_height) * 0.5)
+    var input_rect: Rect2 = Rect2(input_pos, Vector2(input_width, input_height))
     _draw_round_rect(input_rect, 6.0, input_bg)
     _draw_round_rect(input_rect, 6.0, input_border, false, 1.0)
 
-    var a_fs := font_size
-    var text_inset := Vector2(6.0, (input_height + a_fs) * 0.5 - 3.0)
-    var text_origin := input_rect.position + text_inset
+    var a_fs: int = font_size
+    var text_inset: Vector2 = Vector2(6.0, (input_height + a_fs) * 0.5 - 3.0)
+    var text_origin: Vector2 = input_rect.position + text_inset
 
     draw_string(f, text_origin, answer, HORIZONTAL_ALIGNMENT_LEFT, input_width - 8.0, a_fs, text_color)
 
-    var caret_on := sin(_caret_phase) > 0.0
+    var caret_on: bool = sin(_caret_phase) > 0.0
     if caret_on:
-        var a_size := f.get_string_size(answer, HORIZONTAL_ALIGNMENT_LEFT, -1, a_fs)
-        var cx := minf(input_rect.position.x + 6.0 + a_size.x + 1.0, input_rect.end.x - 6.0)
-        var cy0 := input_rect.position.y + 4.0
-        var cy1 := input_rect.end.y - 4.0
+        var a_size: Vector2 = f.get_string_size(answer, HORIZONTAL_ALIGNMENT_LEFT, -1, a_fs)
+        var cx: float = minf(input_rect.position.x + 6.0 + a_size.x + 1.0, input_rect.end.x - 6.0)
+        var cy0: float = input_rect.position.y + 4.0
+        var cy1: float = input_rect.end.y - 4.0
         draw_line(Vector2(cx, cy0), Vector2(cx, cy1), caret_color, 1.0)
 
-    var hint_y := rect.position.y + padding.y + maxf(q_size.y, input_height) + 6.0 + h_size.y
+    var hint_y: float = rect.position.y + padding.y + maxf(q_size.y, input_height) + 6.0 + h_size.y
     draw_string(f, Vector2(base_x, hint_y), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, int(max(12, font_size - 4)), hint_color)
+
+
 # ─── Draw Helpers ─────────────────────────────────────────
 
 ## Godot 4 没有 draw_round_rect()；用 StyleBoxFlat 画圆角矩形（并支持描边）。
 func _draw_round_rect(rect: Rect2, radius: float, color: Color, filled: bool = true, border_width: float = 1.0) -> void:
     radius = maxf(radius, 0.0)
 
-    # 退化：半径很小时直接画矩形即可
     if radius <= 0.01:
         draw_rect(rect, color, filled, border_width)
         return
 
-    # 使用 StyleBoxFlat 渲染圆角（最稳妥/兼容的方式）
-    var sb := StyleBoxFlat.new()
+    var sb: StyleBoxFlat = StyleBoxFlat.new()
     sb.bg_color = color
 
     sb.corner_radius_top_left = int(radius)
@@ -259,7 +274,7 @@ func _draw_round_rect(rect: Rect2, radius: float, color: Color, filled: bool = t
         sb.border_width_right = 0
         sb.border_width_bottom = 0
     else:
-        var w := int(maxf(border_width, 1.0))
+        var w: int = int(maxf(border_width, 1.0))
         sb.border_width_left = w
         sb.border_width_top = w
         sb.border_width_right = w

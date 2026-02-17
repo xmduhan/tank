@@ -51,7 +51,7 @@ func _world() -> Node:
 
 func _get_enemies(root: Node) -> Array[Node2D]:
     var out: Array[Node2D] = []
-    for n in root.get_children(): 
+    for n in root.get_children():
         var e := n as Node2D
         if e != null and e.is_in_group("enemy"):
             out.append(e)

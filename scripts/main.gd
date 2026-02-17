@@ -4,6 +4,7 @@ extends Node2D
 @export var total_enemy_count: int = 20
 
 const _RESTART_KEYS: Array[int] = [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]
+const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 
 var _game_over: bool = false
 var _end_layer: CanvasLayer
@@ -15,7 +16,7 @@ func _ready() -> void:
     _build_end_ui()
 
     var spawner := _setup_enemy_spawner()
-    _spawn_player_tank(Vector2(200, 180))
+    _spawn_player_tank(_get_screen_center_world())
     _wire_victory_and_defeat(spawner)
 
 
@@ -39,8 +40,17 @@ func _setup_enemy_spawner() -> EnemySpawner:
 func _spawn_player_tank(pos: Vector2) -> CharacterBody2D:
     var player := load("res://scenes/units/tank/player.tscn").instantiate() as CharacterBody2D
     add_child(player)
-    player.position = pos
+    player.global_position = pos
     return player
+
+
+func _get_screen_center_world() -> Vector2:
+    var vp := get_viewport()
+    if vp == null:
+        return Vector2.ZERO
+
+    var rect := WorldBounds.get_visible_world_rect(vp)
+    return rect.get_center() if rect.size.length() > 1.0 else Vector2.ZERO
 
 
 func _wire_victory_and_defeat(spawner: EnemySpawner) -> void:
@@ -108,7 +118,16 @@ func _build_end_ui() -> void:
 
     var panel := PanelContainer.new()
     panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    panel.set_anchors_preset(Control.PRESET_CENTER)
+
+    panel.anchor_left = 0.5
+    panel.anchor_top = 0.5
+    panel.anchor_right = 0.5
+    panel.anchor_bottom = 0.5
+    panel.offset_left = 0.0
+    panel.offset_top = 0.0
+    panel.offset_right = 0.0
+    panel.offset_bottom = 0.0
+
     root.add_child(panel)
 
     var sb := StyleBoxFlat.new()

@@ -7,7 +7,6 @@ class_name EnemyAIController
 ## - 无锁定目标时：随机游走（四方向，周期性换向）
 ## - 屏幕边界软回正，避免出屏
 
-const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 
 @export_group("Targeting")
 @export var player_group: StringName = &"player"

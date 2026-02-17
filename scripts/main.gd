@@ -4,11 +4,13 @@ extends Node2D
 @export var total_enemy_count: int = 20
 
 const _RESTART_KEYS: Array[int] = [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]
-const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
+
+const _END_PANEL_MIN_SIZE: Vector2 = Vector2(560.0, 180.0)
 
 var _game_over: bool = false
 var _end_layer: CanvasLayer
 var _end_label: Label
+var _end_panel: PanelContainer
 
 
 func _ready() -> void:
@@ -26,6 +28,11 @@ func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and event.keycode in _RESTART_KEYS:
         get_viewport().set_input_as_handled()
         _restart()
+
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_WM_SIZE_CHANGED:
+        _layout_end_ui_centered()
 
 
 func _setup_enemy_spawner() -> EnemySpawner:
@@ -116,19 +123,15 @@ func _build_end_ui() -> void:
     root.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _end_layer.add_child(root)
 
-    var panel := PanelContainer.new()
-    panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _end_panel = PanelContainer.new()
+    _end_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _end_panel.custom_minimum_size = _END_PANEL_MIN_SIZE
 
-    panel.anchor_left = 0.5
-    panel.anchor_top = 0.5
-    panel.anchor_right = 0.5
-    panel.anchor_bottom = 0.5
-    panel.offset_left = 0.0
-    panel.offset_top = 0.0
-    panel.offset_right = 0.0
-    panel.offset_bottom = 0.0
-
-    root.add_child(panel)
+    _end_panel.anchor_left = 0.5
+    _end_panel.anchor_top = 0.5
+    _end_panel.anchor_right = 0.5
+    _end_panel.anchor_bottom = 0.5
+    root.add_child(_end_panel)
 
     var sb := StyleBoxFlat.new()
     sb.bg_color = Color(0.04, 0.04, 0.05, 0.85)
@@ -145,21 +148,36 @@ func _build_end_ui() -> void:
     sb.content_margin_right = 18
     sb.content_margin_top = 14
     sb.content_margin_bottom = 14
-    panel.add_theme_stylebox_override("panel", sb)
+    _end_panel.add_theme_stylebox_override("panel", sb)
 
     _end_label = Label.new()
     _end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     _end_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     _end_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    _end_label.custom_minimum_size = Vector2(520, 0)
     _end_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    panel.add_child(_end_label)
+    _end_panel.add_child(_end_label)
 
     _end_layer.visible = false
+    _layout_end_ui_centered()
+
+
+func _layout_end_ui_centered() -> void:
+    if _end_panel == null:
+        return
+
+    var size := _end_panel.custom_minimum_size
+    if size.x <= 1.0 or size.y <= 1.0:
+        size = _END_PANEL_MIN_SIZE
+
+    _end_panel.offset_left = -size.x * 0.5
+    _end_panel.offset_top = -size.y * 0.5
+    _end_panel.offset_right = size.x * 0.5
+    _end_panel.offset_bottom = size.y * 0.5
 
 
 func _show_end_message(message: String) -> void:
     if _end_layer == null or _end_label == null:
         return
     _end_label.text = message
+    _layout_end_ui_centered()
     _end_layer.visible = true

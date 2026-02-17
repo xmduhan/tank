@@ -38,9 +38,7 @@ func _spawn_explosion() -> void:
     if fx == null:
         return
 
-    var world := _host.get_tree().current_scene
-    if world == null:
-        world = _host.get_parent()
+    var world := SceneTreeUtils.safe_world(_host)
     if world == null:
         return
 

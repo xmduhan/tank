@@ -48,9 +48,7 @@ func shoot(target: CharacterBody2D) -> void:
         return
 
     var trail := bullet_trail_scene.instantiate()
-    var world := _host.get_tree().current_scene
-    if world == null:
-        world = _host.get_parent()
+    var world := SceneTreeUtils.safe_world(_host)
     if world == null:
         return
 
@@ -90,9 +88,7 @@ func _spawn_hit_explosion(pos: Vector2) -> void:
     if fx == null:
         return
 
-    var world := _host.get_tree().current_scene
-    if world == null:
-        world = _host.get_parent()
+    var world := SceneTreeUtils.safe_world(_host)
     if world == null:
         return
 

@@ -2,7 +2,6 @@ extends Node
 ## 玩家坦克控制器：负责将输入转化为移动指令；空格触发答题，答对后才射击。
 
 const TARGET_MATH_PROMPT_SCENE: PackedScene = preload("res://scenes/ui/aim.tscn")
-const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 
 @export_group("Screen Bounds")
 @export var screen_margin: float = 18.0
@@ -106,7 +105,7 @@ func _ensure_math_prompt() -> void:
     if is_instance_valid(_math_prompt):
         return
 
-    var world := get_tree().current_scene
+    var world := SceneTreeUtils.safe_world(self)
     if world == null:
         world = get_parent()
 

@@ -3,7 +3,6 @@ class_name EnemySpawner
 
 signal victory
 
-const WorldBounds := preload("res://scripts/utils/world_bounds.gd")
 
 @export var enemy_scene: PackedScene = preload("res://scenes/units/tank/enemy.tscn")
 
@@ -45,7 +44,14 @@ func _bootstrap() -> void:
 
 
 func _world() -> Node:
-    var world: Node = get_tree().current_scene
+    if not is_inside_tree():
+        return null
+
+    var tree := get_tree()
+    if tree == null:
+        return null
+
+    var world: Node = tree.current_scene
     return world if world != null else get_parent()
 
 
@@ -128,6 +134,8 @@ func _wire_enemy(enemy: Node2D) -> void:
 
 
 func _on_enemy_exited() -> void:
+    if not is_inside_tree():
+        return
     _ensure_enemy_count()
 
 

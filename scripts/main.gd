@@ -42,13 +42,14 @@ var _radar_is_aiming: bool = false
 
 
 func _ready() -> void:
-    # Main 不应全程 ALWAYS。暂停时应随世界一起停。
-    # “暂停界面/答题界面”自身使用 ALWAYS 即可继续工作。
-    process_mode = Node.PROCESS_MODE_PAUSABLE
+    # 关键修复：
+    # - game over 会设置 SceneTree.paused=true
+    # - 需要在 paused 下仍然接收按键来重开
+    # 因此 Main 必须 ALWAYS，并使用 _input（而不是依赖 unhandled_input 的 paused 行为/传播）。
+    process_mode = Node.PROCESS_MODE_ALWAYS
     randomize()
 
-    # 仅用于 game over 时接收重开输入；暂停期间不需要 Main 处理输入
-    set_process_unhandled_input(true)
+    set_process_input(true)
 
     _ensure_audio_manager()
     _start_bgm()
@@ -62,10 +63,11 @@ func _ready() -> void:
     _wire_radar_audio_global()
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
     if not _game_over:
         return
-    if event is InputEventKey and event.pressed and event.keycode in _RESTART_KEYS:
+
+    if event is InputEventKey and event.pressed and int(event.keycode) in _RESTART_KEYS:
         get_viewport().set_input_as_handled()
         _restart()
 
@@ -172,10 +174,20 @@ func _end_game(message: String) -> void:
 
 
 func _duck_bgm_for_end_state() -> void:
-    # 继续播放同一首 BGM，但把音量降为原来的 1/3（线性）
-    # 通过重新调用 play_music 让 AudioManager 用 tween 平滑切到新音量
-    var end_db: float = _BGM_VOLUME_DB + _END_BGM_DB_DELTA
-    AudioManager.play_music(_BGM_STREAM, end_db, _END_BGM_FADE_SECONDS)
+    # 需求：BGM 不重新播放，不重置进度，只把当前正在播放的 MusicPlayer 音量降到 1/3。
+    var mgr: AudioManager = AudioManager.ensure(get_tree().current_scene)
+    if mgr == null:
+        return
+
+    var mp: AudioStreamPlayer = mgr.get_node_or_null("MusicPlayer") as AudioStreamPlayer
+    if not is_instance_valid(mp):
+        return
+
+    # 目标音量 = 当前音量 + (-9.5424dB) 约等于线性 1/3
+    var target_db: float = float(mp.volume_db) + _END_BGM_DB_DELTA
+
+    var tw: Tween = create_tween()
+    tw.tween_property(mp, "volume_db", target_db, _END_BGM_FADE_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 func _restart() -> void:
@@ -187,6 +199,7 @@ func _restart() -> void:
 func _build_end_ui() -> void:
     _end_layer = CanvasLayer.new()
     _end_layer.layer = 1000
+    _end_layer.process_mode = Node.PROCESS_MODE_ALWAYS
     add_child(_end_layer)
 
     var root: Control = Control.new()
@@ -199,7 +212,10 @@ func _build_end_ui() -> void:
     root.offset_top = 0.0
     root.offset_right = 0.0
     root.offset_bottom = 0.0
-    root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+    # 让结束 UI 在显示时“吃掉”鼠标事件，避免一些平台/情况下输入传播异常；
+    # 键盘重开由 Main._input(Always) 处理，不依赖 unhandled_input 链路。
+    root.mouse_filter = Control.MOUSE_FILTER_STOP
     _end_layer.add_child(root)
 
     _end_panel = PanelContainer.new()

@@ -12,6 +12,9 @@ class_name TargetMathPromptDrawn
 ## 需求调整：
 ## - 出题改为“n 的倍数题”：从 n*2=, n*3=, ..., n*n= 中随机选择
 ## - n 使用 GameBalance.MULTIPLE_BASE
+##
+## 新增需求：
+## - 键盘输入要有回响（按键音效）
 
 signal answered_correct
 signal answered_wrong
@@ -62,6 +65,7 @@ var _caret_phase: float = 0.0
 var _time_left: float = 0.0
 
 var _font: Font = null
+var _key_echo: KeyEcho = null
 
 
 func _ready() -> void:
@@ -75,6 +79,8 @@ func _ready() -> void:
     var df: Font = ThemeDB.fallback_font
     if df != null:
         _font = df
+
+    _ensure_key_echo()
 
 
 func popup_for_target(target: Node2D) -> void:
@@ -138,6 +144,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
     if event is InputEventKey and event.pressed:
         var k: InputEventKey = event as InputEventKey
+
+        _ensure_key_echo()
+        if is_instance_valid(_key_echo):
+            _key_echo.echo_key_event(k, self)
 
         if k.keycode == KEY_ESCAPE:
             hide_prompt()
@@ -325,3 +335,14 @@ func _draw_round_rect(rect: Rect2, radius: float, color: Color, filled: bool = t
         sb.bg_color = Color(0, 0, 0, 0)
 
     draw_style_box(sb, rect)
+
+
+func _ensure_key_echo() -> void:
+    if is_instance_valid(_key_echo):
+        return
+
+    var ke: KeyEcho = KeyEcho.new()
+    ke.name = "KeyEcho"
+    ke.process_mode = Node.PROCESS_MODE_ALWAYS
+    add_child(ke)
+    _key_echo = ke

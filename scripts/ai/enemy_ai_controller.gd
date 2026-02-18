@@ -1,10 +1,10 @@
 extends Node
 class_name EnemyAIController
 ## 敌人 AI（角落出生 + 无目标随机游走）：
-## - 四向移动（不斜走）
+## - 允许任意方向移动（支持斜走）
 ## - 目标进入射程后：持续瞄准 aim_time 秒才允许发射
 ## - 仅当“射程内存在锁定目标(targeting.current_target)”时才追击/开火
-## - 无锁定目标时：随机游走（四方向，周期性换向）
+## - 无锁定目标时：随机游走（任意方向，周期性换向/可停顿）
 ## - 屏幕边界软回正，避免出屏
 
 
@@ -80,7 +80,7 @@ func _physics_process(delta: float) -> void:
         _update_wander_if_needed()
 
     var move_dir: Vector2 = _compute_desired_move_direction(has_target_in_range)
-    _move.direction = _to_cardinal(_bounded_direction(move_dir))
+    _move.direction = _bounded_direction(move_dir)
 
     _update_aim_and_fire(delta, target_in_range)
 
@@ -111,15 +111,7 @@ func _pick_new_wander_dir() -> void:
         _wander_dir = Vector2.ZERO
         return
 
-    match _rng.randi_range(0, 3):
-        0:
-            _wander_dir = Vector2.RIGHT
-        1:
-            _wander_dir = Vector2.LEFT
-        2:
-            _wander_dir = Vector2.DOWN
-        _:
-            _wander_dir = Vector2.UP
+    _wander_dir = _random_unit()
 
 
 func _update_chase_target_if_needed() -> void:
@@ -219,8 +211,10 @@ func _bounded_direction(dir: Vector2) -> Vector2:
     if dir.length() <= 0.001:
         return Vector2.ZERO
 
+    var ndir: Vector2 = dir.normalized()
+
     if _bounds.size.length() <= 1.0:
-        return dir.normalized()
+        return ndir
 
     var pos: Vector2 = _host.global_position
     var steer: Vector2 = Vector2(
@@ -229,9 +223,9 @@ func _bounded_direction(dir: Vector2) -> Vector2:
     )
 
     if steer.length() <= 0.001:
-        return dir.normalized()
+        return ndir
 
-    var mixed: Vector2 = dir.normalized() + steer * bounds_steer_strength
+    var mixed: Vector2 = ndir + steer * bounds_steer_strength
     return mixed.normalized() if mixed.length() > 0.001 else steer.normalized()
 
 
@@ -254,18 +248,6 @@ func _falloff(t: float) -> float:
     return x * x
 
 
-func _to_cardinal(v: Vector2) -> Vector2:
-    if v.length() <= 0.001:
-        return Vector2.ZERO
-
-    var ax: float = absf(v.x)
-    var ay: float = absf(v.y)
-
-    if ax >= ay:
-        return Vector2(signf(v.x), 0.0)
-    return Vector2(0.0, signf(v.y))
-
-
 func _find_nearest_player() -> CharacterBody2D:
     var players: Array[Node] = get_tree().get_nodes_in_group(player_group)
     if players.is_empty():
@@ -275,7 +257,7 @@ func _find_nearest_player() -> CharacterBody2D:
     var best_d2: float = INF
     var o: Vector2 = _host.global_position
 
-    for n in players:
+    for n: Node in players:
         var p: CharacterBody2D = n as CharacterBody2D
         if p == null or not is_instance_valid(p):
             continue

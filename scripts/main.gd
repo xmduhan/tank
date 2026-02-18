@@ -31,6 +31,9 @@ const _END_BGM_LINEAR_SCALE: float = 1.0 / 3.0
 const _END_BGM_DB_DELTA: float = -9.542425094 # 20 * log10(1/3)
 const _END_BGM_FADE_SECONDS: float = 0.25
 
+# Background auto-fit
+const _BG_NODE_PATH: NodePath = NodePath("Background")
+
 var _game_over: bool = false
 var _end_layer: CanvasLayer
 var _end_label: Label
@@ -39,6 +42,10 @@ var _end_panel: PanelContainer
 # Radar arbitration state
 var _radar_has_target: bool = false
 var _radar_is_aiming: bool = false
+
+# Cached background baseline (from scene file)
+var _bg: Sprite2D = null
+var _bg_base_scale: Vector2 = Vector2.ONE
 
 
 func _ready() -> void:
@@ -53,6 +60,9 @@ func _ready() -> void:
 
     _ensure_audio_manager()
     _start_bgm()
+
+    _cache_background()
+    _fit_background_to_viewport()
 
     _build_end_ui()
 
@@ -75,6 +85,7 @@ func _input(event: InputEvent) -> void:
 func _notification(what: int) -> void:
     if what == NOTIFICATION_WM_SIZE_CHANGED:
         _layout_end_ui_centered()
+        _fit_background_to_viewport()
 
 
 func _ensure_audio_manager() -> void:
@@ -281,6 +292,42 @@ func _show_end_message(message: String) -> void:
     _end_label.text = message
     _layout_end_ui_centered()
     _end_layer.visible = true
+
+
+# ─────────────────────────────────────────────────────────────
+# Background: runtime fit
+# ─────────────────────────────────────────────────────────────
+
+func _cache_background() -> void:
+    var n: Node = get_node_or_null(_BG_NODE_PATH)
+    _bg = n as Sprite2D
+    if is_instance_valid(_bg):
+        _bg_base_scale = _bg.scale
+
+
+func _fit_background_to_viewport() -> void:
+    if not is_instance_valid(_bg) or _bg.texture == null:
+        return
+
+    var vp: Viewport = get_viewport()
+    if vp == null:
+        return
+
+    var view_rect: Rect2 = vp.get_visible_rect()
+    var view_size: Vector2 = view_rect.size
+    if view_size.x <= 1.0 or view_size.y <= 1.0:
+        return
+
+    _bg.position = view_rect.get_center()
+
+    var tex_size: Vector2 = _bg.texture.get_size()
+    if tex_size.x <= 0.0 or tex_size.y <= 0.0:
+        return
+
+    var sx: float = view_size.x / tex_size.x
+    var sy: float = view_size.y / tex_size.y
+    var uniform: float = maxf(sx, sy) # cover
+    _bg.scale = _bg_base_scale * uniform
 
 
 # ─────────────────────────────────────────────────────────────

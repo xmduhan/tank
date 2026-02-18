@@ -12,7 +12,7 @@ script = ExtResource("1_o5qli")
 z_index = -100
 texture = ExtResource("3_desert_bg")
 centered = true
-position = Vector2(960, 540)
-scale = Vector2(1.875, 1.0546875)
+position = Vector2(0, 0)
+scale = Vector2(1, 1)
 
 [node name="AudioManager" parent="." instance=ExtResource("2_audio_manager")]

@@ -22,8 +22,8 @@ class_name EnemyAIController
 @export var wander_idle_chance: float = 0.08
 
 @export_group("Combat")
-@export var fire_cooldown: float = 0.7
-@export var aim_time: float = 5.0
+@export var fire_cooldown: float = 3.0
+@export var aim_time: float = 3.0
 
 @export_group("Screen Bounds")
 @export var screen_margin: float = 18.0

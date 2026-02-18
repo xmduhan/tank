@@ -25,7 +25,7 @@ class_name ShootComponent
 @export var miss_min_distance: float = 35.0
 
 @export_group("Audio")
-@export var shoot_sfx: AudioStream = preload("res://assets/audio/sfx/shoot.ogg")
+@export var shoot_sfx: AudioStream = preload("res://assets/audio/sfx/shoot.mp3")
 
 var _host: Node2D
 var _turret: Node2D

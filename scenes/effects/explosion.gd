@@ -5,7 +5,7 @@ extends Node2D
 @export var auto_free_delay: float = 1.2
 
 @export_group("Audio")
-@export var explosion_sfx: AudioStream = preload("res://assets/audio/sfx/explosion.ogg")
+@export var explosion_sfx: AudioStream = preload("res://assets/audio/sfx/explosion.wav")
 
 func _ready() -> void:
     top_level = true

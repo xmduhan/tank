@@ -26,6 +26,11 @@ const _RADAR_PITCH_AIMING: float = 2.0
 const _END_LABEL_FONT_SIZE: int = 44
 const _END_LABEL_LINE_SPACING: float = 6.0
 
+# 游戏结束后：BGM 继续播放但音量为原来的 1/3
+const _END_BGM_LINEAR_SCALE: float = 1.0 / 3.0
+const _END_BGM_DB_DELTA: float = -9.542425094 # 20 * log10(1/3)
+const _END_BGM_FADE_SECONDS: float = 0.25
+
 var _game_over: bool = false
 var _end_layer: CanvasLayer
 var _end_label: Label
@@ -160,11 +165,17 @@ func _end_game(message: String) -> void:
         return
     _game_over = true
 
-    # 游戏结束：停止 BGM（淡出更自然）
-    AudioManager.stop_music(0.25)
+    _duck_bgm_for_end_state()
 
     get_tree().paused = true
     _show_end_message(message)
+
+
+func _duck_bgm_for_end_state() -> void:
+    # 继续播放同一首 BGM，但把音量降为原来的 1/3（线性）
+    # 通过重新调用 play_music 让 AudioManager 用 tween 平滑切到新音量
+    var end_db: float = _BGM_VOLUME_DB + _END_BGM_DB_DELTA
+    AudioManager.play_music(_BGM_STREAM, end_db, _END_BGM_FADE_SECONDS)
 
 
 func _restart() -> void:

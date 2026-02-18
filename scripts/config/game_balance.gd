@@ -12,3 +12,6 @@ const ENEMY_FIRE_COOLDOWN_MULT: float = 1.75
 
 ## 敌人开局强制“梦游”时长（秒）
 const ENEMY_INITIAL_DREAM_SECONDS: float = 10.0
+
+## 敌人履带循环音效开关（关闭可避免多个敌人叠加太吵）
+const ENEMY_TRACKS_SFX_ENABLED: bool = false

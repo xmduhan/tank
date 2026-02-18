@@ -7,36 +7,68 @@ class_name MoveComponent
 @export var tracks_loop_sfx: AudioStream = preload("res://assets/audio/sfx/tracks_loop.ogg")
 @export var tracks_fade_in: float = 0.06
 @export var tracks_fade_out: float = 0.10
+@export var tracks_volume_db: float = -12.0
 
 var body: CharacterBody2D
 var direction: Vector2 = Vector2.ZERO
 
 const BIAS: Vector2 = Vector2(0.1, 0.1)
 
+var _tracks_key: StringName = &""
+var _tracks_playing: bool = false
+
 
 func _ready() -> void:
-    process_mode = Node.PROCESS_MODE_PAUSABLE
+    process_mode = Node.PROCESS_MODE_ALWAYS
     body = get_parent() as CharacterBody2D
-    assert(body)
+    assert(body != null)
+
+    _tracks_key = StringName("tracks_%s" % str(body.get_instance_id()))
+    set_physics_process(true)
+    set_process(true)
 
 
-@warning_ignore("unused_parameter")
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
+    if not is_instance_valid(body):
+        return
+
     body.velocity = direction * speed - BIAS
 
-    if direction.length() > 0.0:
+    if direction.length_squared() > 0.001:
         body.rotation = direction.angle()
 
-    _update_tracks_audio()
     body.move_and_slide()
+
+
+func _process(_delta: float) -> void:
+    _update_tracks_audio()
+
+
+func _exit_tree() -> void:
+    _stop_tracks_immediately()
+
+
+func _is_moving() -> bool:
+    return direction.length_squared() > 0.001
 
 
 func _update_tracks_audio() -> void:
     if not is_instance_valid(body):
         return
 
-    var moving: bool = direction.length_squared() > 0.001
-    if moving:
-        AudioManager.play_loop(&"tracks", tracks_loop_sfx, -12.0, tracks_fade_in)
-    else:
-        AudioManager.stop_loop(&"tracks", tracks_fade_out)
+    var moving: bool = _is_moving()
+    if moving and not _tracks_playing:
+        _tracks_playing = true
+        AudioManager.play_loop(_tracks_key, tracks_loop_sfx, tracks_volume_db, tracks_fade_in)
+        return
+
+    if (not moving) and _tracks_playing:
+        _tracks_playing = false
+        AudioManager.stop_loop(_tracks_key, tracks_fade_out)
+
+
+func _stop_tracks_immediately() -> void:
+    if _tracks_key == &"":
+        return
+    _tracks_playing = false
+    AudioManager.stop_loop(_tracks_key, 0.0)

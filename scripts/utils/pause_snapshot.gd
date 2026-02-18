@@ -25,6 +25,7 @@ func begin() -> void:
     if _depth == 0:
         _paused_before = tree.paused
         tree.paused = true
+        AudioManager.set_paused(true)
 
     _depth += 1
 
@@ -41,6 +42,7 @@ func end() -> void:
     _depth -= 1
     if _depth == 0:
         tree.paused = _paused_before
+        AudioManager.set_paused(tree.paused)
 
 
 func reset() -> void:
@@ -48,3 +50,4 @@ func reset() -> void:
     var tree: SceneTree = get_tree()
     if tree != null:
         tree.paused = _paused_before
+        AudioManager.set_paused(tree.paused)

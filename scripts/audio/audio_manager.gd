@@ -5,6 +5,9 @@ class_name AudioManager
 ## - 通过静态方法访问：AudioManager.play_sfx_2d / play_loop / stop_loop
 ## - 通过 ensure(root) 确保场景中存在且仅存在一个实例
 ## - 支持循环音效按 key 复用，并提供淡入淡出
+##
+## 新增：
+## - set_paused(paused): 暂停时将 loop player stream_paused=true（避免暂停界面仍在循环播放）
 
 static var _instance: AudioManager = null
 
@@ -16,6 +19,7 @@ static var _instance: AudioManager = null
 
 var _loops: Dictionary = {} # StringName -> AudioStreamPlayer
 var _tweens: Dictionary = {} # StringName -> Tween
+var _paused: bool = false
 
 
 func _enter_tree() -> void:
@@ -63,11 +67,19 @@ static func _find_existing_under(root: Node) -> AudioManager:
     return null
 
 
+static func set_paused(paused: bool) -> void:
+    var mgr: AudioManager = ensure(_safe_current_scene())
+    if mgr == null:
+        return
+    mgr._set_paused_impl(paused)
+
+
 static func play_sfx_2d(host: Node, stream: AudioStream, volume_db: float = NAN, pitch_scale: float = 1.0) -> void:
     if stream == null:
         return
 
-    var mgr: AudioManager = ensure(host.get_tree().current_scene if host != null and host.get_tree() != null else null)
+    var root: Node = host.get_tree().current_scene if host != null and host.get_tree() != null else null
+    var mgr: AudioManager = ensure(root)
     if mgr == null:
         return
 
@@ -98,6 +110,15 @@ static func _safe_current_scene() -> Node:
     if tree == null:
         return null
     return tree.current_scene
+
+
+func _set_paused_impl(paused: bool) -> void:
+    _paused = paused
+    for key: Variant in _loops.keys():
+        var k: StringName = key as StringName
+        var p: AudioStreamPlayer = _loops.get(k, null) as AudioStreamPlayer
+        if is_instance_valid(p):
+            p.stream_paused = _paused
 
 
 func _play_sfx_2d_impl(host: Node, stream: AudioStream, volume_db: float, pitch_scale: float) -> void:
@@ -137,7 +158,7 @@ func _play_loop_impl(key: StringName, stream: AudioStream, volume_db: float, fad
 
     player.stream = stream
     player.pitch_scale = 1.0
-    player.stream_paused = false
+    player.stream_paused = _paused
     player.volume_db = target_db if fade_in <= 0.0 else -80.0
 
     if not player.playing or should_restart:
@@ -180,12 +201,7 @@ func _ensure_stream_looping(stream: AudioStream) -> void:
     if stream == null:
         return
 
-    # Godot 4: AudioStreamPlayer 没有可写的 loop 属性；循环通常由 stream 自身控制。
-    # 常见的 ogg 音效资源是 AudioStreamOggVorbis，可直接设置 loop。
     var ogg: AudioStreamOggVorbis = stream as AudioStreamOggVorbis
     if ogg != null:
         ogg.loop = true
         return
-
-    # 其他类型（如 AudioStreamWAV）也可能支持 loop，但不同版本/类型接口不一致。
-    # 为避免再次触发属性赋值错误，这里采用安全策略：仅对明确类型做设置。

@@ -130,6 +130,10 @@ func _ensure_math_prompt() -> void:
     assert(_math_prompt != null, "Controller: TargetMathPrompt instantiate failed.")
     world.add_child(_math_prompt)
 
+    # 兼容保护：只有当脚本确实暴露了该属性时才赋值，避免“Invalid assignment”再次出现
+    if "multiple_base" in _math_prompt:
+        _math_prompt.multiple_base = GameBalance.MULTIPLE_BASE
+
     _math_prompt.answered_correct.connect(_on_math_correct)
     _math_prompt.answered_wrong.connect(_on_math_failed)
     _math_prompt.canceled.connect(_on_math_failed)

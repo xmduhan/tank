@@ -15,3 +15,6 @@ const ENEMY_INITIAL_DREAM_SECONDS: float = 10.0
 
 ## 敌人履带循环音效开关（关闭可避免多个敌人叠加太吵）
 const ENEMY_TRACKS_SFX_ENABLED: bool = false
+
+## 射击口算题：倍数题基数 n（题目形如：n × k）
+const MULTIPLE_BASE: int = 12

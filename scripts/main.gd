@@ -4,7 +4,6 @@ extends Node2D
 @export var total_enemy_count: int = 20
 
 const _RESTART_KEYS: Array[int] = [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]
-
 const _END_PANEL_MIN_SIZE: Vector2 = Vector2(560.0, 180.0)
 
 var _game_over: bool = false
@@ -16,11 +15,15 @@ var _end_panel: PanelContainer
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
     randomize()
+
+    _ensure_audio_manager()
     _build_end_ui()
 
-    var spawner := _setup_enemy_spawner()
+    var spawner: EnemySpawner = _setup_enemy_spawner()
     _spawn_player_tank(_get_screen_center_world())
     _wire_victory_and_defeat(spawner)
+
+    _wire_radar_audio_global()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -36,8 +39,23 @@ func _notification(what: int) -> void:
         _layout_end_ui_centered()
 
 
+func _ensure_audio_manager() -> void:
+    if AudioManager.is_ready():
+        return
+
+    var world: Node = get_tree().current_scene
+    if world == null:
+        world = self
+
+    var mgr: AudioManager = AudioManager.ensure(world)
+    mgr.bus_sfx = &"Master"
+    mgr.bus_music = &"Master"
+    mgr.default_sfx_volume_db = -6.0
+    mgr.loop_volume_db = -12.0
+
+
 func _setup_enemy_spawner() -> EnemySpawner:
-    var spawner := EnemySpawner.new()
+    var spawner: EnemySpawner = EnemySpawner.new()
     add_child(spawner)
 
     spawner.desired_enemy_count = desired_enemy_count
@@ -46,18 +64,18 @@ func _setup_enemy_spawner() -> EnemySpawner:
 
 
 func _spawn_player_tank(pos: Vector2) -> CharacterBody2D:
-    var player := load("res://scenes/units/tank/player.tscn").instantiate() as CharacterBody2D
+    var player: CharacterBody2D = load("res://scenes/units/tank/player.tscn").instantiate() as CharacterBody2D
     add_child(player)
     player.global_position = pos
     return player
 
 
 func _get_screen_center_world() -> Vector2:
-    var vp := get_viewport()
+    var vp: Viewport = get_viewport()
     if vp == null:
         return Vector2.ZERO
 
-    var rect := WorldBounds.get_visible_world_rect(vp)
+    var rect: Rect2 = WorldBounds.get_visible_world_rect(vp)
     return rect.get_center() if rect.size.length() > 1.0 else Vector2.ZERO
 
 
@@ -65,19 +83,19 @@ func _wire_victory_and_defeat(spawner: EnemySpawner) -> void:
     if is_instance_valid(spawner) and spawner.has_signal("victory"):
         spawner.victory.connect(_on_victory)
 
-    var player := _find_player()
+    var player: CharacterBody2D = _find_player()
     if not is_instance_valid(player):
         return
 
-    var health := player.get_node_or_null("health") as HealthComponent
+    var health: HealthComponent = player.get_node_or_null("health") as HealthComponent
     if health != null:
         health.died.connect(_on_defeat)
 
 
 func _find_player() -> CharacterBody2D:
-    var players := get_tree().get_nodes_in_group("player")
+    var players: Array[Node] = get_tree().get_nodes_in_group("player")
     for n in players:
-        var p := n as CharacterBody2D
+        var p: CharacterBody2D = n as CharacterBody2D
         if is_instance_valid(p):
             return p
     return null
@@ -111,7 +129,7 @@ func _build_end_ui() -> void:
     _end_layer.layer = 1000
     add_child(_end_layer)
 
-    var root := Control.new()
+    var root: Control = Control.new()
     root.name = "EndUIRoot"
     root.anchor_left = 0.0
     root.anchor_top = 0.0
@@ -134,7 +152,7 @@ func _build_end_ui() -> void:
     _end_panel.anchor_bottom = 0.5
     root.add_child(_end_panel)
 
-    var sb := StyleBoxFlat.new()
+    var sb: StyleBoxFlat = StyleBoxFlat.new()
     sb.bg_color = Color(0.04, 0.04, 0.05, 0.85)
     sb.border_color = Color(1, 1, 1, 0.18)
     sb.border_width_left = 2
@@ -166,7 +184,7 @@ func _layout_end_ui_centered() -> void:
     if _end_panel == null:
         return
 
-    var size := _end_panel.custom_minimum_size
+    var size: Vector2 = _end_panel.custom_minimum_size
     if size.x <= 1.0 or size.y <= 1.0:
         size = _END_PANEL_MIN_SIZE
 
@@ -182,3 +200,47 @@ func _show_end_message(message: String) -> void:
     _end_label.text = message
     _layout_end_ui_centered()
     _end_layer.visible = true
+
+
+func _wire_radar_audio_global() -> void:
+    _scan_and_wire_targeting()
+    child_entered_tree.connect(_on_node_entered_tree)
+
+
+func _on_node_entered_tree(node: Node) -> void:
+    _wire_targeting_under(node)
+
+
+func _scan_and_wire_targeting() -> void:
+    _wire_targeting_under(self)
+
+
+func _wire_targeting_under(root: Node) -> void:
+    if root == null:
+        return
+
+    for n in _walk(root):
+        var t: TargetingComponent = n as TargetingComponent
+        if t == null:
+            continue
+        if not t.target_changed.is_connected(_on_any_target_changed):
+            t.target_changed.connect(_on_any_target_changed)
+
+
+func _walk(root: Node) -> Array[Node]:
+    var out: Array[Node] = []
+    var stack: Array[Node] = [root]
+    while not stack.is_empty():
+        var n: Node = stack.pop_back()
+        out.append(n)
+        for c in n.get_children():
+            stack.append(c)
+    return out
+
+
+func _on_any_target_changed(new_target: CharacterBody2D) -> void:
+    var has_target: bool = is_instance_valid(new_target)
+    if has_target:
+        AudioManager.play_loop(&"radar", preload("res://assets/audio/sfx/radar.ogg"), -18.0, 0.08)
+    else:
+        AudioManager.stop_loop(&"radar", 0.10)

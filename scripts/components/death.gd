@@ -4,6 +4,8 @@ class_name DeathFxComponent
 ## - 监听同级 health(HealthComponent) 的 died 信号
 ## - 在宿主位置生成殉爆特效
 ## - 可选：销毁宿主
+##
+## 说明：爆炸音效放在 explosion.gd 内统一播放（命中爆炸/死亡殉爆共用）
 
 @export var explosion_scene: PackedScene = preload("res://scenes/effects/explosion.tscn")
 @export var free_host_on_death: bool = true
@@ -34,11 +36,11 @@ func _spawn_explosion() -> void:
     if explosion_scene == null or not is_instance_valid(_host):
         return
 
-    var fx := explosion_scene.instantiate() as Node2D
+    var fx: Node2D = explosion_scene.instantiate() as Node2D
     if fx == null:
         return
 
-    var world := SceneTreeUtils.safe_world(_host)
+    var world: Node = SceneTreeUtils.safe_world(_host)
     if world == null:
         return
 

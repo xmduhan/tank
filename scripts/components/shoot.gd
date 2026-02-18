@@ -7,6 +7,7 @@ class_name ShootComponent
 ##
 ## 新增：
 ## - shoot_miss(): 打空（只生成随机偏移的弹道特效，不结算伤害/不生成命中特效）
+## - 开火音效（命中/打空都触发）
 
 @export var turret_path: NodePath
 @export var muzzle_offset: Vector2 = Vector2(55, 0)
@@ -22,6 +23,9 @@ class_name ShootComponent
 @export_group("Miss (FX Only)")
 @export var miss_radius: float = 120.0
 @export var miss_min_distance: float = 35.0
+
+@export_group("Audio")
+@export var shoot_sfx: AudioStream = preload("res://assets/audio/sfx/shoot.ogg")
 
 var _host: Node2D
 var _turret: Node2D
@@ -45,6 +49,8 @@ func _ready() -> void:
 func shoot(target: CharacterBody2D) -> void:
     if not is_instance_valid(target):
         return
+
+    AudioManager.play_sfx_2d(_host, shoot_sfx)
 
     var start_pos: Vector2 = _get_muzzle_global_position()
     var end_pos: Vector2 = target.global_position
@@ -77,6 +83,8 @@ func shoot(target: CharacterBody2D) -> void:
 func shoot_miss(target: CharacterBody2D) -> void:
     if not is_instance_valid(target):
         return
+
+    AudioManager.play_sfx_2d(_host, shoot_sfx)
 
     var world: Node = SceneTreeUtils.safe_world(_host)
     if world == null or bullet_trail_scene == null:

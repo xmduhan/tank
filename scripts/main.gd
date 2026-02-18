@@ -263,6 +263,6 @@ func _walk(root: Node) -> Array[Node]:
 func _on_any_target_changed(new_target: CharacterBody2D) -> void:
     var has_target: bool = is_instance_valid(new_target)
     if has_target:
-        AudioManager.play_loop(&"radar", preload("res://assets/audio/sfx/radar.wav"), -18.0, 0.08)
+        AudioManager.play_loop(&"radar", preload("res://assets/audio/sfx/radar.wav"), -18.0, 0.08, 2.0)
     else:
         AudioManager.stop_loop(&"radar", 0.10)

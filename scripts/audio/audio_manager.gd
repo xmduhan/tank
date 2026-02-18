@@ -9,6 +9,7 @@ class_name AudioManager
 ##
 ## 新增：
 ## - set_paused(paused): 暂停时将 loop player 与 BGM 的 stream_paused=true
+## - play_loop 增加 pitch_scale：支持循环音效变速（例如雷达 2 倍速）
 
 static var _instance: AudioManager = null
 
@@ -123,7 +124,13 @@ static func play_sfx_2d(host: Node, stream: AudioStream, volume_db: float = NAN,
     mgr._play_sfx_2d_impl(host, stream, volume_db, pitch_scale)
 
 
-static func play_loop(key: StringName, stream: AudioStream, volume_db: float = NAN, fade_in: float = 0.08) -> void:
+static func play_loop(
+    key: StringName,
+    stream: AudioStream,
+    volume_db: float = NAN,
+    fade_in: float = 0.08,
+    pitch_scale: float = 1.0
+) -> void:
     if stream == null:
         return
 
@@ -131,7 +138,7 @@ static func play_loop(key: StringName, stream: AudioStream, volume_db: float = N
     if mgr == null:
         return
 
-    mgr._play_loop_impl(key, stream, volume_db, fade_in)
+    mgr._play_loop_impl(key, stream, volume_db, fade_in, pitch_scale)
 
 
 static func stop_loop(key: StringName, fade_out: float = 0.10) -> void:
@@ -192,7 +199,13 @@ func _play_sfx_2d_impl(host: Node, stream: AudioStream, volume_db: float, pitch_
     p.play()
 
 
-func _play_loop_impl(key: StringName, stream: AudioStream, volume_db: float, fade_in: float) -> void:
+func _play_loop_impl(
+    key: StringName,
+    stream: AudioStream,
+    volume_db: float,
+    fade_in: float,
+    pitch_scale: float
+) -> void:
     var player: AudioStreamPlayer = _loops.get(key, null) as AudioStreamPlayer
     if not is_instance_valid(player):
         player = AudioStreamPlayer.new()
@@ -203,10 +216,11 @@ func _play_loop_impl(key: StringName, stream: AudioStream, volume_db: float, fad
     _ensure_stream_looping(stream)
 
     var target_db: float = loop_volume_db if is_nan(volume_db) else volume_db
-    var should_restart: bool = (player.stream != stream)
+    var safe_pitch: float = maxf(pitch_scale, 0.01)
+    var should_restart: bool = (player.stream != stream) or (not is_equal_approx(player.pitch_scale, safe_pitch))
 
     player.stream = stream
-    player.pitch_scale = 1.0
+    player.pitch_scale = safe_pitch
     player.stream_paused = _paused
     player.volume_db = target_db if fade_in <= 0.0 else -80.0
 

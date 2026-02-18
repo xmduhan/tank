@@ -7,7 +7,9 @@ const _RESTART_KEYS: Array[int] = [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]
 const _END_PANEL_MIN_SIZE: Vector2 = Vector2(560.0, 180.0)
 
 const _BGM_STREAM: AudioStream = preload("res://assets/audio/music/backgroud.mp3")
-const _BGM_VOLUME_DB: float = -14.0
+
+# 音量减半≈-6dB：-14 -> -20
+const _BGM_VOLUME_DB: float = -20.0
 const _BGM_FADE_IN: float = 0.45
 
 const _VICTORY_SFX: AudioStream = preload("res://assets/audio/sfx/victory.wav")

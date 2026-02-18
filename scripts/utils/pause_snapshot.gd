@@ -8,6 +8,10 @@ class_name PauseSnapshot
 ## - UI 弹窗出现时暂停世界
 ## - UI 自身可用 PROCESS_MODE_ALWAYS 继续收输入/绘制
 ## - 允许嵌套调用 begin()/end()（引用计数）
+##
+## 需求调整：
+## - “瞄准/答题时背景音乐不能暂停”
+##   因此不再调用 AudioManager.set_paused(true/false)，避免 MusicPlayer.stream_paused 被置为 true。
 
 var _depth: int = 0
 var _paused_before: bool = false
@@ -25,7 +29,6 @@ func begin() -> void:
     if _depth == 0:
         _paused_before = tree.paused
         tree.paused = true
-        AudioManager.set_paused(true)
 
     _depth += 1
 
@@ -42,7 +45,6 @@ func end() -> void:
     _depth -= 1
     if _depth == 0:
         tree.paused = _paused_before
-        AudioManager.set_paused(tree.paused)
 
 
 func reset() -> void:
@@ -50,4 +52,3 @@ func reset() -> void:
     var tree: SceneTree = get_tree()
     if tree != null:
         tree.paused = _paused_before
-        AudioManager.set_paused(tree.paused)

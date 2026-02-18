@@ -6,6 +6,13 @@ extends Node2D
 const _RESTART_KEYS: Array[int] = [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]
 const _END_PANEL_MIN_SIZE: Vector2 = Vector2(560.0, 180.0)
 
+const _BGM_STREAM: AudioStream = preload("res://assets/audio/music/backgroud.mp3")
+const _BGM_VOLUME_DB: float = -14.0
+const _BGM_FADE_IN: float = 0.45
+
+const _VICTORY_SFX: AudioStream = preload("res://assets/audio/sfx/victory.wav")
+const _FAIL_SFX: AudioStream = preload("res://assets/audio/sfx/fail.wav")
+
 var _game_over: bool = false
 var _end_layer: CanvasLayer
 var _end_label: Label
@@ -22,6 +29,8 @@ func _ready() -> void:
     set_process_unhandled_input(true)
 
     _ensure_audio_manager()
+    _start_bgm()
+
     _build_end_ui()
 
     var spawner: EnemySpawner = _setup_enemy_spawner()
@@ -57,6 +66,10 @@ func _ensure_audio_manager() -> void:
     mgr.bus_music = &"Master"
     mgr.default_sfx_volume_db = -6.0
     mgr.loop_volume_db = -12.0
+
+
+func _start_bgm() -> void:
+    AudioManager.play_music(_BGM_STREAM, _BGM_VOLUME_DB, _BGM_FADE_IN)
 
 
 func _setup_enemy_spawner() -> EnemySpawner:
@@ -107,10 +120,12 @@ func _find_player() -> CharacterBody2D:
 
 
 func _on_victory() -> void:
+    AudioManager.play_sfx_2d(self, _VICTORY_SFX, -6.0)
     _end_game("胜利！\n已消灭全部敌人。\n\n按空格键重新开始")
 
 
 func _on_defeat() -> void:
+    AudioManager.play_sfx_2d(self, _FAIL_SFX, -6.0)
     _end_game("失败！\n玩家已被摧毁。\n\n按空格键重新开始")
 
 

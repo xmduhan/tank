@@ -2,12 +2,13 @@ extends Node
 class_name AudioManager
 
 ## 轻量全局音频管理（无 Autoload 依赖）：
-## - 通过静态方法访问：AudioManager.play_sfx_2d / play_loop / stop_loop
+## - 通过静态方法访问：AudioManager.play_sfx_2d / play_loop / stop_loop / play_music / stop_music
 ## - 通过 ensure(root) 确保场景中存在且仅存在一个实例
 ## - 支持循环音效按 key 复用，并提供淡入淡出
+## - 支持一个全局 BGM 播放器（MusicPlayer）
 ##
 ## 新增：
-## - set_paused(paused): 暂停时将 loop player stream_paused=true（避免暂停界面仍在循环播放）
+## - set_paused(paused): 暂停时将 loop player 与 BGM 的 stream_paused=true
 
 static var _instance: AudioManager = null
 
@@ -16,16 +17,26 @@ static var _instance: AudioManager = null
 
 @export var default_sfx_volume_db: float = -6.0
 @export var loop_volume_db: float = -12.0
+@export var music_volume_db: float = -14.0
 
 var _loops: Dictionary = {} # StringName -> AudioStreamPlayer
 var _tweens: Dictionary = {} # StringName -> Tween
+
+var _music_player: AudioStreamPlayer = null
+var _music_tween: Tween = null
+
 var _paused: bool = false
+var _music_enabled: bool = true
 
 
 func _enter_tree() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
     if _instance == null:
         _instance = self
+
+
+func _ready() -> void:
+    _music_player = _resolve_music_player()
 
 
 func _exit_tree() -> void:
@@ -74,6 +85,32 @@ static func set_paused(paused: bool) -> void:
     mgr._set_paused_impl(paused)
 
 
+static func set_music_enabled(enabled: bool, fade_out: float = 0.25) -> void:
+    var mgr: AudioManager = ensure(_safe_current_scene())
+    if mgr == null:
+        return
+    mgr._set_music_enabled_impl(enabled, fade_out)
+
+
+static func play_music(stream: AudioStream, volume_db: float = NAN, fade_in: float = 0.45) -> void:
+    if stream == null:
+        return
+
+    var mgr: AudioManager = ensure(_safe_current_scene())
+    if mgr == null:
+        return
+
+    mgr._play_music_impl(stream, volume_db, fade_in)
+
+
+static func stop_music(fade_out: float = 0.35) -> void:
+    var mgr: AudioManager = ensure(_safe_current_scene())
+    if mgr == null:
+        return
+
+    mgr._stop_music_impl(fade_out)
+
+
 static func play_sfx_2d(host: Node, stream: AudioStream, volume_db: float = NAN, pitch_scale: float = 1.0) -> void:
     if stream == null:
         return
@@ -114,11 +151,23 @@ static func _safe_current_scene() -> Node:
 
 func _set_paused_impl(paused: bool) -> void:
     _paused = paused
+
     for key: Variant in _loops.keys():
         var k: StringName = key as StringName
         var p: AudioStreamPlayer = _loops.get(k, null) as AudioStreamPlayer
         if is_instance_valid(p):
             p.stream_paused = _paused
+
+    var mp: AudioStreamPlayer = _resolve_music_player()
+    if is_instance_valid(mp):
+        mp.stream_paused = _paused
+
+
+func _set_music_enabled_impl(enabled: bool, fade_out: float) -> void:
+    _music_enabled = enabled
+    if enabled:
+        return
+    _stop_music_impl(fade_out)
 
 
 func _play_sfx_2d_impl(host: Node, stream: AudioStream, volume_db: float, pitch_scale: float) -> void:
@@ -190,11 +239,61 @@ func _stop_loop_impl(key: StringName, fade_out: float) -> void:
     tw.tween_callback(Callable(player, "stop"))
 
 
+func _play_music_impl(stream: AudioStream, volume_db: float, fade_in: float) -> void:
+    if not _music_enabled:
+        return
+
+    var mp: AudioStreamPlayer = _resolve_music_player()
+    if not is_instance_valid(mp):
+        return
+
+    _ensure_stream_looping(stream)
+
+    mp.bus = bus_music
+    mp.stream_paused = _paused
+
+    var target_db: float = music_volume_db if is_nan(volume_db) else volume_db
+    var should_restart: bool = (mp.stream != stream)
+
+    mp.stream = stream
+    mp.volume_db = target_db if fade_in <= 0.0 else -80.0
+
+    if not mp.playing or should_restart:
+        mp.play()
+
+    _kill_music_tween()
+    if fade_in > 0.0:
+        _music_tween = create_tween()
+        _music_tween.tween_property(mp, "volume_db", target_db, fade_in).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
+func _stop_music_impl(fade_out: float) -> void:
+    var mp: AudioStreamPlayer = _resolve_music_player()
+    if not is_instance_valid(mp):
+        return
+
+    _kill_music_tween()
+
+    if fade_out <= 0.0:
+        mp.stop()
+        return
+
+    _music_tween = create_tween()
+    _music_tween.tween_property(mp, "volume_db", -80.0, fade_out).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+    _music_tween.tween_callback(Callable(mp, "stop"))
+
+
 func _kill_tween(key: StringName) -> void:
     var tw: Tween = _tweens.get(key, null) as Tween
     if is_instance_valid(tw):
         tw.kill()
     _tweens.erase(key)
+
+
+func _kill_music_tween() -> void:
+    if is_instance_valid(_music_tween):
+        _music_tween.kill()
+    _music_tween = null
 
 
 func _ensure_stream_looping(stream: AudioStream) -> void:
@@ -205,3 +304,20 @@ func _ensure_stream_looping(stream: AudioStream) -> void:
     if ogg != null:
         ogg.loop = true
         return
+
+
+func _resolve_music_player() -> AudioStreamPlayer:
+    if is_instance_valid(_music_player):
+        return _music_player
+
+    var existing: AudioStreamPlayer = get_node_or_null("MusicPlayer") as AudioStreamPlayer
+    if is_instance_valid(existing):
+        _music_player = existing
+        return _music_player
+
+    var mp: AudioStreamPlayer = AudioStreamPlayer.new()
+    mp.name = "MusicPlayer"
+    mp.bus = bus_music
+    add_child(mp)
+    _music_player = mp
+    return _music_player

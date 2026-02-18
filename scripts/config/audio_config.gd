@@ -6,5 +6,9 @@ class_name AudioConfig
 
 const DEFAULT_SFX_VOLUME_DB: float = -6.0
 const DEFAULT_LOOP_VOLUME_DB: float = -12.0
+const DEFAULT_MUSIC_VOLUME_DB: float = -14.0
+
 const BUS_SFX: StringName = &"Master"
 const BUS_MUSIC: StringName = &"Master"
+
+const DEFAULT_BGM_STREAM_PATH: String = "res://assets/audio/music/backgroud.mp3"

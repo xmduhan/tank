@@ -130,14 +130,15 @@ func _play_loop_impl(key: StringName, stream: AudioStream, volume_db: float, fad
         add_child(player)
         _loops[key] = player
 
-    var target_db: float = loop_volume_db if is_nan(volume_db) else volume_db
+    _ensure_stream_looping(stream)
 
+    var target_db: float = loop_volume_db if is_nan(volume_db) else volume_db
     var should_restart: bool = (player.stream != stream)
+
     player.stream = stream
     player.pitch_scale = 1.0
     player.stream_paused = false
     player.volume_db = target_db if fade_in <= 0.0 else -80.0
-    player.loop = true
 
     if not player.playing or should_restart:
         player.play()
@@ -173,3 +174,18 @@ func _kill_tween(key: StringName) -> void:
     if is_instance_valid(tw):
         tw.kill()
     _tweens.erase(key)
+
+
+func _ensure_stream_looping(stream: AudioStream) -> void:
+    if stream == null:
+        return
+
+    # Godot 4: AudioStreamPlayer 没有可写的 loop 属性；循环通常由 stream 自身控制。
+    # 常见的 ogg 音效资源是 AudioStreamOggVorbis，可直接设置 loop。
+    var ogg: AudioStreamOggVorbis = stream as AudioStreamOggVorbis
+    if ogg != null:
+        ogg.loop = true
+        return
+
+    # 其他类型（如 AudioStreamWAV）也可能支持 loop，但不同版本/类型接口不一致。
+    # 为避免再次触发属性赋值错误，这里采用安全策略：仅对明确类型做设置。

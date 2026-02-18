@@ -13,8 +13,8 @@ class_name ShootComponent
 @export var muzzle_offset: Vector2 = Vector2(55, 0)
 
 @export_group("Combat")
-@export var damage: float = 101.0
-@export var bullet_speed: float = 1000.0
+@export var damage: float = 35
+@export var bullet_speed: float = 5000.0
 
 @export_group("Effects")
 @export var bullet_trail_scene: PackedScene = preload("res://scenes/effects/bullet_trail.tscn")

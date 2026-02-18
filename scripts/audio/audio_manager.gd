@@ -5,7 +5,7 @@ class_name AudioManager
 ## - 通过静态方法访问：AudioManager.play_sfx_2d / play_loop / stop_loop / play_music / stop_music
 ## - 通过 ensure(root) 确保场景中存在且仅存在一个实例
 ## - 支持循环音效按 key 复用，并提供淡入淡出
-## - 支持一个全局 BGM 播放器（MusicPlayer）
+## - 支持一个全局 BGM sa播放器（MusicPlayer）
 ##
 ## 新增：
 ## - set_paused(paused): 暂停时将 loop player 与 BGM 的 stream_paused=true

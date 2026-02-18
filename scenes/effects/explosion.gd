@@ -7,6 +7,7 @@ extends Node2D
 @export_group("Audio")
 @export var explosion_sfx: AudioStream = preload("res://assets/audio/sfx/explosion.wav")
 
+
 func _ready() -> void:
     top_level = true
     global_position = global_position

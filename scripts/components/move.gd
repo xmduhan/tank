@@ -5,7 +5,7 @@ class_name MoveComponent
 
 @export_group("Audio")
 @export var enable_tracks_sfx: bool = true
-@export var tracks_loop_sfx: AudioStream = preload("res://assets/audio/sfx/tracks_loop.ogg")
+@export var tracks_loop_sfx: AudioStream = preload("res://assets/audio/sfx/tracks_loop.wav")
 @export var tracks_fade_in: float = 0.06
 @export var tracks_fade_out: float = 0.10
 @export var tracks_volume_db: float = -12.0

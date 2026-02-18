@@ -8,6 +8,10 @@ class_name TargetMathPromptDrawn
 ## 新增：
 ## - 倒计时（time_limit_seconds，默认10秒）
 ## - 超时发出 timed_out（视为射击失败）
+##
+## 需求调整：
+## - 出题改为“n 的倍数题”：从 n*2=, n*3=, ..., n*n= 中随机选择
+## - n 使用 GameBalance.MULTIPLE_BASE
 
 signal answered_correct
 signal answered_wrong
@@ -16,8 +20,10 @@ signal timed_out
 
 const QUESTION_PREFIX: String = "射击诸元: "
 
-@export var max_operand: int = 10
 @export var y_offset: float = 85.0
+
+@export_group("Question (Multiples)")
+@export var multiple_base: int = GameBalance.MULTIPLE_BASE
 
 @export_group("Timer")
 @export var time_limit_seconds: float = 10.0
@@ -201,21 +207,10 @@ func _update_position_follow_target() -> void:
 
 
 func _generate_question() -> void:
-    var a: int = randi_range(0, max_operand)
-    var b: int = randi_range(0, max_operand)
-    var is_add: bool = (randi() % 2) == 0
-
-    if is_add:
-        _expected = a + b
-        _question = "%d + %d =" % [a, b]
-        return
-
-    if a < b:
-        var tmp: int = a
-        a = b
-        b = tmp
-    _expected = a - b
-    _question = "%d - %d =" % [a, b]
+    var n: int = maxi(multiple_base, 2)
+    var k: int = randi_range(2, n)
+    _expected = n * k
+    _question = "%d × %d =" % [n, k]
 
 
 func _keycode_to_digit(keycode: int) -> int:

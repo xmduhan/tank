@@ -15,10 +15,22 @@ const _BGM_FADE_IN: float = 0.45
 const _VICTORY_SFX: AudioStream = preload("res://assets/audio/sfx/victory.wav")
 const _FAIL_SFX: AudioStream = preload("res://assets/audio/sfx/fail.wav")
 
+const _RADAR_SFX: AudioStream = preload("res://assets/audio/sfx/radar.wav")
+const _RADAR_KEY: StringName = &"radar"
+const _RADAR_VOLUME_DB: float = -18.0
+const _RADAR_FADE_IN: float = 0.08
+const _RADAR_FADE_OUT: float = 0.10
+const _RADAR_PITCH_NORMAL: float = 1.0
+const _RADAR_PITCH_AIMING: float = 2.0
+
 var _game_over: bool = false
 var _end_layer: CanvasLayer
 var _end_label: Label
 var _end_panel: PanelContainer
+
+# Radar arbitration state
+var _radar_has_target: bool = false
+var _radar_is_aiming: bool = false
 
 
 func _ready() -> void:
@@ -224,6 +236,17 @@ func _show_end_message(message: String) -> void:
     _end_layer.visible = true
 
 
+# ─────────────────────────────────────────────────────────────
+# Radar audio: global wiring + arbitration
+# ─────────────────────────────────────────────────────────────
+
+func set_radar_aiming(active: bool) -> void:
+    if _radar_is_aiming == active:
+        return
+    _radar_is_aiming = active
+    _update_radar_loop()
+
+
 func _wire_radar_audio_global() -> void:
     _scan_and_wire_targeting()
     child_entered_tree.connect(_on_node_entered_tree)
@@ -241,7 +264,7 @@ func _wire_targeting_under(root: Node) -> void:
     if root == null:
         return
 
-    for n in _walk(root):
+    for n: Node in _walk(root):
         var t: TargetingComponent = n as TargetingComponent
         if t == null:
             continue
@@ -255,14 +278,19 @@ func _walk(root: Node) -> Array[Node]:
     while not stack.is_empty():
         var n: Node = stack.pop_back()
         out.append(n)
-        for c in n.get_children():
+        for c: Node in n.get_children():
             stack.append(c)
     return out
 
 
 func _on_any_target_changed(new_target: CharacterBody2D) -> void:
-    var has_target: bool = is_instance_valid(new_target)
-    if has_target:
-        AudioManager.play_loop(&"radar", preload("res://assets/audio/sfx/radar.wav"), -18.0, 0.08, 2.0)
+    _radar_has_target = is_instance_valid(new_target)
+    _update_radar_loop()
+
+
+func _update_radar_loop() -> void:
+    if _radar_has_target:
+        var pitch: float = _RADAR_PITCH_AIMING if _radar_is_aiming else _RADAR_PITCH_NORMAL
+        AudioManager.play_loop(_RADAR_KEY, _RADAR_SFX, _RADAR_VOLUME_DB, _RADAR_FADE_IN, pitch)
     else:
-        AudioManager.stop_loop(&"radar", 0.10)
+        AudioManager.stop_loop(_RADAR_KEY, _RADAR_FADE_OUT)

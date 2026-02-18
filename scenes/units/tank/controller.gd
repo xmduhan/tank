@@ -51,6 +51,11 @@ func _physics_process(_delta: float) -> void:
     _clamp_to_screen_bounds()
 
 
+func _exit_tree() -> void:
+    # 避免切场景/重开时雷达保持 2x
+    _set_radar_aiming(false)
+
+
 func _clamp_to_screen_bounds() -> void:
     var vp: Viewport = get_viewport()
     if vp == null:
@@ -90,6 +95,8 @@ func _try_shoot_with_math_gate() -> void:
 
     _pending_shot_target = target
     _asking = true
+
+    _set_radar_aiming(true)
 
     if is_instance_valid(_pause):
         _pause.begin()
@@ -149,8 +156,15 @@ func _resume_game_if_needed() -> void:
         _pause.end()
 
 
+func _set_radar_aiming(active: bool) -> void:
+    var main: Node = get_tree().current_scene
+    if main != null and main.has_method("set_radar_aiming"):
+        main.call("set_radar_aiming", active)
+
+
 func _on_math_correct() -> void:
     _asking = false
+    _set_radar_aiming(false)
     _resume_game_if_needed()
 
     var target: CharacterBody2D = _pending_shot_target
@@ -161,6 +175,7 @@ func _on_math_correct() -> void:
 
 func _on_math_failed() -> void:
     _asking = false
+    _set_radar_aiming(false)
     _resume_game_if_needed()
 
     var target: CharacterBody2D = _pending_shot_target

@@ -21,7 +21,10 @@ var _tracks_allowed: bool = true
 
 
 func _ready() -> void:
-    process_mode = Node.PROCESS_MODE_ALWAYS
+    # 必须随游戏暂停：答题弹窗出现时 SceneTree.paused=true，
+    # MoveComponent 不应继续驱动移动/音效。
+    process_mode = Node.PROCESS_MODE_PAUSABLE
+
     body = get_parent() as CharacterBody2D
     assert(body != null)
 

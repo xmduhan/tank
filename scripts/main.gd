@@ -13,8 +13,13 @@ var _end_panel: PanelContainer
 
 
 func _ready() -> void:
-    process_mode = Node.PROCESS_MODE_ALWAYS
+    # Main 不应全程 ALWAYS。暂停时应随世界一起停。
+    # “暂停界面/答题界面”自身使用 ALWAYS 即可继续工作。
+    process_mode = Node.PROCESS_MODE_PAUSABLE
     randomize()
+
+    # 仅用于 game over 时接收重开输入；暂停期间不需要 Main 处理输入
+    set_process_unhandled_input(true)
 
     _ensure_audio_manager()
     _build_end_ui()

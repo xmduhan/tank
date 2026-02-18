@@ -23,6 +23,9 @@ const _RADAR_FADE_OUT: float = 0.10
 const _RADAR_PITCH_NORMAL: float = 1.0
 const _RADAR_PITCH_AIMING: float = 2.0
 
+const _END_LABEL_FONT_SIZE: int = 44
+const _END_LABEL_LINE_SPACING: float = 6.0
+
 var _game_over: bool = false
 var _end_layer: CanvasLayer
 var _end_label: Label
@@ -126,7 +129,7 @@ func _wire_victory_and_defeat(spawner: EnemySpawner) -> void:
 
 func _find_player() -> CharacterBody2D:
     var players: Array[Node] = get_tree().get_nodes_in_group("player")
-    for n in players:
+    for n: Node in players:
         var p: CharacterBody2D = n as CharacterBody2D
         if is_instance_valid(p):
             return p
@@ -134,19 +137,31 @@ func _find_player() -> CharacterBody2D:
 
 
 func _on_victory() -> void:
-    AudioManager.play_sfx_2d(self, _VICTORY_SFX, -6.0)
+    _play_end_sfx(_VICTORY_SFX)
     _end_game("胜利！\n已消灭全部敌人。\n\n按空格键重新开始")
 
 
 func _on_defeat() -> void:
-    AudioManager.play_sfx_2d(self, _FAIL_SFX, -6.0)
+    _play_end_sfx(_FAIL_SFX)
     _end_game("失败！\n玩家已被摧毁。\n\n按空格键重新开始")
+
+
+func _play_end_sfx(stream: AudioStream) -> void:
+    if stream == null:
+        return
+
+    # 用 CanvasLayer 作为 host（ALWAYS），避免“马上 paused”导致音效不触发/不稳定
+    var host: Node = _end_layer if is_instance_valid(_end_layer) else self
+    AudioManager.play_sfx_2d(host, stream, -6.0)
 
 
 func _end_game(message: String) -> void:
     if _game_over:
         return
     _game_over = true
+
+    # 游戏结束：停止 BGM（淡出更自然）
+    AudioManager.stop_music(0.25)
 
     get_tree().paused = true
     _show_end_message(message)
@@ -208,6 +223,11 @@ func _build_end_ui() -> void:
     _end_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     _end_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     _end_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+    # 字体调大（仅覆盖该 Label，不影响全局主题）
+    _end_label.add_theme_font_size_override("font_size", _END_LABEL_FONT_SIZE)
+    _end_label.add_theme_constant_override("line_spacing", int(_END_LABEL_LINE_SPACING))
+
     _end_panel.add_child(_end_label)
 
     _end_layer.visible = false

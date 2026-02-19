@@ -34,8 +34,6 @@ const _END_BGM_FADE_SECONDS: float = 0.25
 # Background auto-fit
 const _BG_NODE_PATH: NodePath = NodePath("Background")
 
-const _SETTINGS_MENU_SCENE: PackedScene = preload("res://scenes/ui/settings_menu.tscn")
-
 var _game_over: bool = false
 var _end_layer: CanvasLayer
 var _end_label: Label
@@ -50,7 +48,6 @@ var _bg: Sprite2D = null
 var _bg_base_scale: Vector2 = Vector2.ONE
 
 var _spawner: EnemySpawner = null
-var _settings_menu: SettingsMenu = null
 
 
 func _ready() -> void:
@@ -71,23 +68,14 @@ func _ready() -> void:
 
     _build_end_ui()
 
-    _apply_settings_to_exports()
-
     _spawner = _setup_enemy_spawner()
     _spawn_player_tank(_get_screen_center_world())
     _wire_victory_and_defeat(_spawner)
 
     _wire_radar_audio_global()
-    _ensure_settings_menu()
 
 
 func _input(event: InputEvent) -> void:
-    if event is InputEventKey and event.pressed and (event as InputEventKey).keycode == KEY_ESCAPE:
-        if not _game_over:
-            if _toggle_settings_menu():
-                get_viewport().set_input_as_handled()
-                return
-
     if not _game_over:
         return
 
@@ -96,11 +84,8 @@ func _input(event: InputEvent) -> void:
         _restart()
 
 
-func _unhandled_input(event: InputEvent) -> void:
-    if event.is_action_pressed(&"ui_settings"):
-        if not _game_over:
-            if _toggle_settings_menu():
-                get_viewport().set_input_as_handled()
+func _unhandled_input(_event: InputEvent) -> void:
+    pass
 
 
 func _notification(what: int) -> void:
@@ -126,59 +111,6 @@ func _ensure_audio_manager() -> void:
 
 func _start_bgm() -> void:
     AudioManager.play_music(_BGM_STREAM, _BGM_VOLUME_DB, _BGM_FADE_IN)
-
-
-func _apply_settings_to_exports() -> void:
-    if Settings == null:
-        return
-
-    desired_enemy_count = int(Settings.enemy_desired_count)
-    total_enemy_count = int(Settings.enemy_total_count)
-
-
-func _ensure_settings_menu() -> void:
-    if is_instance_valid(_settings_menu):
-        return
-
-    _settings_menu = _SETTINGS_MENU_SCENE.instantiate() as SettingsMenu
-    if _settings_menu == null:
-        return
-
-    add_child(_settings_menu)
-    _settings_menu.process_mode = Node.PROCESS_MODE_ALWAYS
-    _settings_menu.visible = false
-
-    if not _settings_menu.settings_applied.is_connected(_on_settings_applied):
-        _settings_menu.settings_applied.connect(_on_settings_applied)
-
-    if not _settings_menu.closed.is_connected(_on_settings_closed):
-        _settings_menu.closed.connect(_on_settings_closed)
-
-
-func _toggle_settings_menu() -> bool:
-    _ensure_settings_menu()
-    if not is_instance_valid(_settings_menu):
-        return false
-
-    var is_open: bool = _settings_menu.visible
-    if is_open:
-        _settings_menu.close_menu()
-    else:
-        _settings_menu.open_menu()
-
-    return true
-
-
-func _on_settings_applied(desired: int, total: int) -> void:
-    desired_enemy_count = desired
-    total_enemy_count = total
-
-    if is_instance_valid(_spawner):
-        _spawner.apply_counts_runtime(desired_enemy_count, total_enemy_count)
-
-
-func _on_settings_closed() -> void:
-    pass
 
 
 func _setup_enemy_spawner() -> EnemySpawner:

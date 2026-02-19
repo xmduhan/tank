@@ -1,18 +1,14 @@
-[gd_scene load_steps=5 format=3 uid="uid://eje55uxax4dq"]
+[gd_scene format=3 uid="uid://eje55uxax4dq"]
 
 [ext_resource type="Script" uid="uid://bupcum6bo1ryx" path="res://scripts/main.gd" id="1_o5qli"]
-[ext_resource type="PackedScene" uid="uid://c0k3k5qk3d3a1" path="res://scenes/audio/audio_manager.tscn" id="2_audio_manager"]
-[ext_resource type="Texture2D" uid="uid://c3g4n2d5e6s7t" path="res://assets/images/desert.png" id="3_desert_bg"]
-[ext_resource type="Script" path="res://scripts/ui/background_fit.gd" id="4_background_fit"]
+[ext_resource type="PackedScene" path="res://scenes/audio/audio_manager.tscn" id="2_audio_manager"]
+[ext_resource type="Texture2D" uid="uid://drieng3mhvh7o" path="res://assets/images/desert.png" id="3_desert_bg"]
 
-[node name="Main" type="Node2D"]
+[node name="Main" type="Node2D" unique_id=1335753713]
 script = ExtResource("1_o5qli")
 
-[node name="Background" type="Sprite2D" parent="."]
+[node name="Background" type="Sprite2D" parent="." unique_id=1580352030]
 z_index = -100
 texture = ExtResource("3_desert_bg")
-centered = true
-position = Vector2(0, 0)
-scale = Vector2(1, 1)
 
-[node name="AudioManager" parent="." instance=ExtResource("2_audio_manager")]
+[node name="AudioManager" parent="." unique_id=1435407089 instance=ExtResource("2_audio_manager")]

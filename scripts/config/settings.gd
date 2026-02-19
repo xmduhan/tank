@@ -9,8 +9,8 @@ const SECTION: String = "game"
 const KEY_ENEMY_DESIRED: String = "enemy_desired_count"
 const KEY_ENEMY_TOTAL: String = "enemy_total_count"
 
-const DEFAULT_ENEMY_DESIRED: int = 4
-const DEFAULT_ENEMY_TOTAL: int = 20
+const DEFAULT_ENEMY_DESIRED: int = 20
+const DEFAULT_ENEMY_TOTAL: int = 1000
 
 const MIN_ENEMY_DESIRED: int = 0
 const MAX_ENEMY_DESIRED: int = 64
@@ -19,16 +19,16 @@ const MIN_ENEMY_TOTAL: int = 0
 const MAX_ENEMY_TOTAL: int = 9999
 
 var enemy_desired_count: int = DEFAULT_ENEMY_DESIRED:
-    set(value: int) -> void:
-        var v: int = clampi(value, MIN_ENEMY_DESIRED, MAX_ENEMY_DESIRED)
+    set(value):
+        var v: int = clampi(int(value), MIN_ENEMY_DESIRED, MAX_ENEMY_DESIRED)
         if v == enemy_desired_count:
             return
         enemy_desired_count = v
         changed.emit()
 
 var enemy_total_count: int = DEFAULT_ENEMY_TOTAL:
-    set(value: int) -> void:
-        var v: int = clampi(value, MIN_ENEMY_TOTAL, MAX_ENEMY_TOTAL)
+    set(value):
+        var v: int = clampi(int(value), MIN_ENEMY_TOTAL, MAX_ENEMY_TOTAL)
         if v == enemy_total_count:
             return
         enemy_total_count = v

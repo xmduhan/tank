@@ -43,7 +43,7 @@ func _unhandled_input(event: InputEvent) -> void:
         KEY_TAB:
             _try_cycle_target()
         KEY_SPACE:
-            _try_shoot_with_math_gate()
+            _try_shoot()
 
 
 func _physics_process(_delta: float) -> void:
@@ -85,7 +85,7 @@ func _try_cycle_target() -> void:
         _attack_range.cycle_target()
 
 
-func _try_shoot_with_math_gate() -> void:
+func _try_shoot() -> void:
     if _attack_range == null or _shoot == null:
         return
 
@@ -93,6 +93,15 @@ func _try_shoot_with_math_gate() -> void:
     if not is_instance_valid(target):
         return
 
+    if not GameBalance.SHOOT_MATH_GATE_ENABLED:
+        _shoot.shoot(target)
+        get_viewport().set_input_as_handled()
+        return
+
+    _try_shoot_with_math_gate(target)
+
+
+func _try_shoot_with_math_gate(target: CharacterBody2D) -> void:
     _pending_shot_target = target
     _asking = true
 

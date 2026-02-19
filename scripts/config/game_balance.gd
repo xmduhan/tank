@@ -17,4 +17,4 @@ const ENEMY_INITIAL_DREAM_SECONDS: float = 10.0
 const ENEMY_TRACKS_SFX_ENABLED: bool = false
 
 ## 射击口算题：倍数题基数 n（题目形如：n × k）
-const MULTIPLE_BASE: int = 19
+const MULTIPLE_BASE: int = 9

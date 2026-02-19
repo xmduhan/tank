@@ -1,0 +1,87 @@
+[gd_scene format=3 load_steps=2]
+
+[ext_resource type="Script" path="res://scenes/ui/settings_menu.gd" id="1_settings_menu_gd"]
+
+[node name="SettingsMenu" type="CanvasLayer"]
+layer = 900
+script = ExtResource("1_settings_menu_gd")
+
+[node name="Root" type="Control" parent="."]
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="Root"]
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+color = Color(0, 0, 0, 0.45)
+mouse_filter = 1
+
+[node name="Panel" type="PanelContainer" parent="Root"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -420.0
+offset_top = -210.0
+offset_right = 420.0
+offset_bottom = 210.0
+mouse_filter = 0
+
+[node name="VBox" type="VBoxContainer" parent="Root/Panel"]
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Root/Panel/VBox"]
+text = "设置"
+horizontal_alignment = 1
+
+[node name="Grid" type="GridContainer" parent="Root/Panel/VBox"]
+columns = 2
+
+[node name="DesiredLabel" type="Label" parent="Root/Panel/VBox/Grid"]
+text = "同时敌人数量"
+vertical_alignment = 1
+
+[node name="DesiredSpin" type="SpinBox" parent="Root/Panel/VBox/Grid"]
+min_value = 0.0
+max_value = 64.0
+step = 1.0
+allow_greater = false
+allow_lesser = false
+
+[node name="TotalLabel" type="Label" parent="Root/Panel/VBox/Grid"]
+text = "总敌人数量"
+vertical_alignment = 1
+
+[node name="TotalSpin" type="SpinBox" parent="Root/Panel/VBox/Grid"]
+min_value = 0.0
+max_value = 9999.0
+step = 1.0
+allow_greater = false
+allow_lesser = false
+
+[node name="Hint" type="Label" parent="Root/Panel/VBox"]
+text = "提示：按 Esc 关闭。保存后会写入 user://settings.cfg"
+autowrap_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Root/Panel/VBox"]
+alignment = 2
+theme_override_constants/separation = 12
+
+[node name="CancelBtn" type="Button" parent="Root/Panel/VBox/Buttons"]
+text = "取消"
+
+[node name="ApplyBtn" type="Button" parent="Root/Panel/VBox/Buttons"]
+text = "保存并应用"

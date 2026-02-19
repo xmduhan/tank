@@ -1,5 +1,5 @@
 extends Node
-class_name Settings
+class_name SettingsStore
 
 signal changed
 
@@ -19,7 +19,7 @@ const MIN_ENEMY_TOTAL: int = 0
 const MAX_ENEMY_TOTAL: int = 9999
 
 var enemy_desired_count: int = DEFAULT_ENEMY_DESIRED:
-    set(value):
+    set(value: int) -> void:
         var v: int = clampi(value, MIN_ENEMY_DESIRED, MAX_ENEMY_DESIRED)
         if v == enemy_desired_count:
             return
@@ -27,7 +27,7 @@ var enemy_desired_count: int = DEFAULT_ENEMY_DESIRED:
         changed.emit()
 
 var enemy_total_count: int = DEFAULT_ENEMY_TOTAL:
-    set(value):
+    set(value: int) -> void:
         var v: int = clampi(value, MIN_ENEMY_TOTAL, MAX_ENEMY_TOTAL)
         if v == enemy_total_count:
             return

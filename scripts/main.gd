@@ -132,8 +132,8 @@ func _apply_settings_to_exports() -> void:
     if Settings == null:
         return
 
-    desired_enemy_count = Settings.enemy_desired_count
-    total_enemy_count = Settings.enemy_total_count
+    desired_enemy_count = int(Settings.enemy_desired_count)
+    total_enemy_count = int(Settings.enemy_total_count)
 
 
 func _ensure_settings_menu() -> void:

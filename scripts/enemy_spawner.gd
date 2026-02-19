@@ -19,6 +19,7 @@ signal victory
 
 var _remaining_to_spawn: int = 0
 var _respawn_timer: SceneTreeTimer = null
+var _bootstrapped: bool = false
 
 
 func _ready() -> void:
@@ -26,20 +27,45 @@ func _ready() -> void:
     call_deferred("_bootstrap")
 
 
+func apply_counts_runtime(desired: int, total: int) -> void:
+    desired_enemy_count = clampi(int(desired), 0, 1024)
+    total_enemies_to_spawn = maxi(int(total), 0)
+
+    if not _bootstrapped:
+        return
+
+    _reconcile_remaining_to_spawn()
+    _ensure_enemy_count()
+
+
 func _bootstrap() -> void:
     if not is_inside_tree():
         return
 
+    _bootstrapped = true
     _remaining_to_spawn = max(total_enemies_to_spawn, 0)
 
     var world: Node = _world()
     if world == null:
         return
 
-    for e in _get_enemies(world):
+    for e: Node2D in _get_enemies(world):
         _wire_enemy(e)
 
     _ensure_enemy_count()
+
+
+func _reconcile_remaining_to_spawn() -> void:
+    var already_spawned: int = _compute_spawned_so_far()
+    _remaining_to_spawn = max(total_enemies_to_spawn - already_spawned, 0)
+
+
+func _compute_spawned_so_far() -> int:
+    var alive: int = _alive_enemies()
+    var spawned_so_far: int = total_enemies_to_spawn - _remaining_to_spawn
+    spawned_so_far = maxi(spawned_so_far, alive)
+    spawned_so_far = maxi(spawned_so_far, 0)
+    return spawned_so_far
 
 
 func _world() -> Node:
@@ -56,9 +82,9 @@ func _world() -> Node:
 
 func _get_enemies(root: Node) -> Array[Node2D]:
     var out: Array[Node2D] = []
-    for n in root.get_children():
+    for n: Node in root.get_children():
         var e: Node2D = n as Node2D
-        if e != null and e.is_in_group("enemy"):
+        if e != null and e.is_in_group(&"enemy"):
             out.append(e)
     return out
 
@@ -80,7 +106,7 @@ func _ensure_enemy_count() -> void:
     if to_spawn_now <= 0:
         return
 
-    for _i in range(to_spawn_now):
+    for _i: int in range(to_spawn_now):
         _remaining_to_spawn -= 1
         _schedule_next_respawn()
 

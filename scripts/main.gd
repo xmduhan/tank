@@ -174,8 +174,6 @@ func _on_settings_applied(desired: int, total: int) -> void:
     total_enemy_count = total
 
     if is_instance_valid(_spawner):
-        _spawner.desired_enemy_count = desired_enemy_count
-        _spawner.total_enemies_to_spawn = total_enemy_count
         _spawner.apply_counts_runtime(desired_enemy_count, total_enemy_count)
 
 

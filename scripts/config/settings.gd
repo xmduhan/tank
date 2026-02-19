@@ -9,8 +9,9 @@ const SECTION: String = "game"
 const KEY_ENEMY_DESIRED: String = "enemy_desired_count"
 const KEY_ENEMY_TOTAL: String = "enemy_total_count"
 
-const DEFAULT_ENEMY_DESIRED: int = 20
-const DEFAULT_ENEMY_TOTAL: int = 1000
+# 默认：更合理的并发与总量（并发不宜太大，否则屏幕很吵/性能压力大）
+const DEFAULT_ENEMY_DESIRED: int = 64
+const DEFAULT_ENEMY_TOTAL: int = 9999
 
 const MIN_ENEMY_DESIRED: int = 0
 const MAX_ENEMY_DESIRED: int = 64

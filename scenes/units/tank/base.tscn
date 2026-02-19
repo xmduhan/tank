@@ -12,7 +12,7 @@
 size = Vector2(110, 60)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_kx2c7"]
-radius = 800.0
+radius = 1000.0
 
 [node name="Base" type="CharacterBody2D" unique_id=1950633393]
 

@@ -1,7 +1,7 @@
 extends Node2D
 
-@export var desired_enemy_count: int = 4
-@export var total_enemy_count: int = 20
+@export var desired_enemy_count: int = 64
+@export var total_enemy_count: int = 9999
 
 const _RESTART_KEYS: Array[int] = [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]
 const _END_PANEL_MIN_SIZE: Vector2 = Vector2(560.0, 180.0)

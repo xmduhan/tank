@@ -22,4 +22,4 @@ const MULTIPLE_BASE: int = 9
 ## 玩家射击是否需要输入“射击诸元”（口算题）：
 ## - true：按空格会弹出答题框，答对才命中；答错/取消/超时打空
 ## - false：按空格直接发射命中（不弹窗、不暂停）
-const SHOOT_MATH_GATE_ENABLED: bool = false
+const SHOOT_MATH_GATE_ENABLED: bool = true

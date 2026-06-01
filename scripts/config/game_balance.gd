@@ -17,7 +17,7 @@ const ENEMY_INITIAL_DREAM_SECONDS: float = 10.0
 const ENEMY_TRACKS_SFX_ENABLED: bool = false
 
 ## 射击口算题：倍数题基数 n（题目形如：n × k）
-const MULTIPLE_BASE: int = 19
+const MULTIPLE_BASE: int = 9
 
 ## 玩家射击是否需要输入“射击诸元”（口算题）：
 ## - true：按空格会弹出答题框，答对才命中；答错/取消/超时打空

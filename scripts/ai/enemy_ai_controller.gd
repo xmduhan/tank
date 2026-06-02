@@ -6,6 +6,9 @@ class_name EnemyAIController
 ## - 仅当“射程内存在锁定目标(targeting.current_target)”时才追击/开火
 ## - 无锁定目标时：随机游走（任意方向，周期性换向/可停顿）
 ## - 屏幕边界软回正，避免出屏
+##
+## P2: 边界一致性
+## - 半径估算统一复用 WorldBounds.estimate_body_radius()
 
 
 @export_group("Targeting")
@@ -135,24 +138,9 @@ func _update_world_bounds() -> void:
 
 
 func _compute_inset_margin() -> Vector2:
-    var host_radius: float = _estimate_host_radius()
+    var host_radius: float = WorldBounds.estimate_body_radius(_host, NodePath("shape"), 34.0)
     var m: float = maxf(screen_margin, 0.0) + host_radius
     return Vector2(m, m)
-
-
-func _estimate_host_radius() -> float:
-    var shape_node: CollisionShape2D = _host.get_node_or_null("shape") as CollisionShape2D
-    if shape_node == null or shape_node.shape == null:
-        return 34.0
-
-    var s: Shape2D = shape_node.shape
-    if s is CircleShape2D:
-        return (s as CircleShape2D).radius
-    if s is RectangleShape2D:
-        var ext: Vector2 = (s as RectangleShape2D).size * 0.5
-        return maxf(ext.x, ext.y)
-
-    return 34.0
 
 
 func _compute_desired_move_direction(has_target_in_range: bool) -> Vector2:

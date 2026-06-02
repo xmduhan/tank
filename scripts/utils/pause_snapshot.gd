@@ -9,9 +9,9 @@ class_name PauseSnapshot
 ## - UI 自身可用 PROCESS_MODE_ALWAYS 继续收输入/绘制
 ## - 允许嵌套调用 begin()/end()（引用计数）
 ##
-## 需求调整：
-## - “瞄准/答题时背景音乐不能暂停”
-##   因此不再调用 AudioManager.set_paused(true/false)，避免 MusicPlayer.stream_paused 被置为 true。
+## P2: 暂停策略集中化
+## - begin/end 只管理 SceneTree.paused（世界暂停）
+## - 音频策略（哪些暂停/哪些不断）由 AudioManager 自己决定；这里不做隐式联动
 
 var _depth: int = 0
 var _paused_before: bool = false
@@ -24,6 +24,7 @@ func _ready() -> void:
 func begin() -> void:
     var tree: SceneTree = get_tree()
     if tree == null:
+        push_error("PauseSnapshot.begin(): no SceneTree.")
         return
 
     if _depth == 0:
@@ -36,9 +37,11 @@ func begin() -> void:
 func end() -> void:
     var tree: SceneTree = get_tree()
     if tree == null:
+        push_error("PauseSnapshot.end(): no SceneTree.")
         return
 
     if _depth <= 0:
+        push_error("PauseSnapshot.end(): called without matching begin().")
         _depth = 0
         return
 
@@ -49,6 +52,10 @@ func end() -> void:
 
 func reset() -> void:
     _depth = 0
+
     var tree: SceneTree = get_tree()
-    if tree != null:
-        tree.paused = _paused_before
+    if tree == null:
+        push_error("PauseSnapshot.reset(): no SceneTree.")
+        return
+
+    tree.paused = _paused_before

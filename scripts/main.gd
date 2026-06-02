@@ -15,14 +15,6 @@ const _BGM_FADE_IN: float = 0.45
 const _VICTORY_SFX: AudioStream = preload("res://assets/audio/sfx/victory.wav")
 const _FAIL_SFX: AudioStream = preload("res://assets/audio/sfx/fail.wav")
 
-const _RADAR_SFX: AudioStream = preload("res://assets/audio/sfx/radar.wav")
-const _RADAR_KEY: StringName = &"radar"
-const _RADAR_VOLUME_DB: float = -18.0
-const _RADAR_FADE_IN: float = 0.08
-const _RADAR_FADE_OUT: float = 0.10
-const _RADAR_PITCH_NORMAL: float = 1.0
-const _RADAR_PITCH_AIMING: float = 2.0
-
 const _END_LABEL_FONT_SIZE: int = 44
 const _END_LABEL_LINE_SPACING: float = 6.0
 
@@ -39,15 +31,14 @@ var _end_layer: CanvasLayer
 var _end_label: Label
 var _end_panel: PanelContainer
 
-# Radar arbitration state
-var _radar_has_target: bool = false
-var _radar_is_aiming: bool = false
-
 # Cached background baseline (from scene file)
 var _bg: Sprite2D = null
 var _bg_base_scale: Vector2 = Vector2.ONE
 
 var _spawner: EnemySpawner = null
+
+# P2: 雷达仲裁解耦
+var _radar: RadarAudioController = null
 
 
 func _ready() -> void:
@@ -72,7 +63,7 @@ func _ready() -> void:
     _spawn_player_tank(_get_screen_center_world())
     _wire_victory_and_defeat(_spawner)
 
-    _wire_radar_audio_global()
+    _ensure_radar_controller()
 
 
 func _input(event: InputEvent) -> void:
@@ -111,6 +102,24 @@ func _ensure_audio_manager() -> void:
 
 func _start_bgm() -> void:
     AudioManager.play_music(_BGM_STREAM, _BGM_VOLUME_DB, _BGM_FADE_IN)
+
+
+func _ensure_radar_controller() -> void:
+    if is_instance_valid(_radar):
+        return
+
+    _radar = RadarAudioController.new()
+    _radar.name = "RadarAudioController"
+    _radar.process_mode = Node.PROCESS_MODE_ALWAYS
+    add_child(_radar)
+
+
+func set_radar_aiming(active: bool) -> void:
+    # 由玩家 Controller 调用；Main 只做转发（P2 解耦）
+    if not is_instance_valid(_radar):
+        push_error("Main.set_radar_aiming(): RadarAudioController missing.")
+        return
+    _radar.set_aiming(active)
 
 
 func _setup_enemy_spawner() -> EnemySpawner:
@@ -334,63 +343,3 @@ func _fit_background_to_viewport() -> void:
     var sy: float = view_size.y / tex_size.y
     var uniform: float = maxf(sx, sy) # cover
     _bg.scale = _bg_base_scale * uniform
-
-
-# ─────────────────────────────────────────────────────────────
-# Radar audio: global wiring + arbitration
-# ─────────────────────────────────────────────────────────────
-
-func set_radar_aiming(active: bool) -> void:
-    if _radar_is_aiming == active:
-        return
-    _radar_is_aiming = active
-    _update_radar_loop()
-
-
-func _wire_radar_audio_global() -> void:
-    _scan_and_wire_targeting()
-    child_entered_tree.connect(_on_node_entered_tree)
-
-
-func _on_node_entered_tree(node: Node) -> void:
-    _wire_targeting_under(node)
-
-
-func _scan_and_wire_targeting() -> void:
-    _wire_targeting_under(self)
-
-
-func _wire_targeting_under(root: Node) -> void:
-    if root == null:
-        return
-
-    for n: Node in _walk(root):
-        var t: TargetingComponent = n as TargetingComponent
-        if t == null:
-            continue
-        if not t.target_changed.is_connected(_on_any_target_changed):
-            t.target_changed.connect(_on_any_target_changed)
-
-
-func _walk(root: Node) -> Array[Node]:
-    var out: Array[Node] = []
-    var stack: Array[Node] = [root]
-    while not stack.is_empty():
-        var n: Node = stack.pop_back()
-        out.append(n)
-        for c: Node in n.get_children():
-            stack.append(c)
-    return out
-
-
-func _on_any_target_changed(new_target: CharacterBody2D) -> void:
-    _radar_has_target = is_instance_valid(new_target)
-    _update_radar_loop()
-
-
-func _update_radar_loop() -> void:
-    if _radar_has_target:
-        var pitch: float = _RADAR_PITCH_AIMING if _radar_is_aiming else _RADAR_PITCH_NORMAL
-        AudioManager.play_loop(_RADAR_KEY, _RADAR_SFX, _RADAR_VOLUME_DB, _RADAR_FADE_IN, pitch)
-    else:
-        AudioManager.stop_loop(_RADAR_KEY, _RADAR_FADE_OUT)

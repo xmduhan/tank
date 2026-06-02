@@ -6,8 +6,8 @@ signal victory
 @export var enemy_scene: PackedScene = preload("res://scenes/units/tank/enemy.tscn")
 
 @export_group("Counts")
-@export var desired_enemy_count: int = 64
-@export var total_enemies_to_spawn: int = 9999
+@export var desired_enemy_count: int = 6
+@export var total_enemies_to_spawn: int = 40
 
 @export_group("Respawn")
 @export var respawn_delay_seconds: float = 1.0

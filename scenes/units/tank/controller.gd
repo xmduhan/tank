@@ -9,7 +9,7 @@ const PAUSE_SNAPSHOT_SCENE: PackedScene = preload("res://scripts/utils/pause_sna
 
 @onready var _host: CharacterBody2D = get_parent() as CharacterBody2D
 @onready var _move: MoveComponent = _host.get_node("movable") as MoveComponent
-@onready var _attack_range: Area2D = _host.get_node_or_null("targeting")
+@onready var _attack_range: TargetingComponent = _host.get_node_or_null("targeting") as TargetingComponent
 @onready var _shoot: ShootComponent = _host.get_node_or_null("shoot") as ShootComponent
 
 var _math_prompt: TargetMathPromptDrawn
@@ -25,6 +25,7 @@ func _ready() -> void:
     assert(_host != null, "Controller: host 必须是 CharacterBody2D。")
     assert(_move != null, "Controller: 未找到兄弟节点 'movable'(MoveComponent)。")
     assert(_shoot != null, "Controller: 未找到兄弟节点 'shoot'(ShootComponent)。")
+    assert(_attack_range != null, "Controller: 未找到兄弟节点 'targeting'(TargetingComponent)。")
 
     _ensure_pause_snapshot()
     _ensure_math_prompt()
@@ -81,15 +82,11 @@ func _axis_value(negative_key: Key, positive_key: Key) -> float:
 
 
 func _try_cycle_target() -> void:
-    if _attack_range != null and _attack_range.has_method("cycle_target"):
-        _attack_range.cycle_target()
+    _attack_range.cycle_target()
 
 
 func _try_shoot() -> void:
-    if _attack_range == null or _shoot == null:
-        return
-
-    var target: CharacterBody2D = _get_current_target()
+    var target: CharacterBody2D = _attack_range.current_target
     if not is_instance_valid(target):
         return
 
@@ -112,19 +109,6 @@ func _try_shoot_with_math_gate(target: CharacterBody2D) -> void:
 
     _math_prompt.popup_for_target(target)
     get_viewport().set_input_as_handled()
-
-
-func _get_current_target() -> CharacterBody2D:
-    if _attack_range == null:
-        return null
-
-    if _attack_range.has_method("get"):
-        return _attack_range.get("current_target") as CharacterBody2D
-
-    if _attack_range.has_method("get_current_target"):
-        return _attack_range.call("get_current_target") as CharacterBody2D
-
-    return null
 
 
 func _ensure_math_prompt() -> void:

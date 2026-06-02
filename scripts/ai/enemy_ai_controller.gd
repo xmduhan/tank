@@ -32,7 +32,7 @@ class_name EnemyAIController
 
 @onready var _host: CharacterBody2D = get_parent() as CharacterBody2D
 @onready var _move: MoveComponent = _host.get_node_or_null("movable") as MoveComponent
-@onready var _targeting: Area2D = _host.get_node_or_null("targeting") as Area2D
+@onready var _targeting: TargetingComponent = _host.get_node_or_null("targeting") as TargetingComponent
 @onready var _shoot: ShootComponent = _host.get_node_or_null("shoot") as ShootComponent
 
 var _chase_target: CharacterBody2D = null
@@ -70,7 +70,7 @@ func _physics_process(delta: float) -> void:
     _update_jitter_if_needed()
     _update_world_bounds()
 
-    var target_in_range: CharacterBody2D = _get_target_in_range()
+    var target_in_range: CharacterBody2D = _targeting.current_target
     var has_target_in_range: bool = is_instance_valid(target_in_range)
 
     if has_target_in_range:
@@ -192,19 +192,6 @@ func _update_aim_and_fire(delta: float, target_in_range: CharacterBody2D) -> voi
 func _reset_aim() -> void:
     _aim_target = null
     _aim_elapsed = 0.0
-
-
-func _get_target_in_range() -> CharacterBody2D:
-    if _targeting == null:
-        return null
-
-    if _targeting.has_method("get"):
-        return _targeting.get("current_target") as CharacterBody2D
-
-    if _targeting.has_method("get_current_target"):
-        return _targeting.call("get_current_target") as CharacterBody2D
-
-    return null
 
 
 func _bounded_direction(dir: Vector2) -> Vector2:

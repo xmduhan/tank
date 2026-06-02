@@ -5,7 +5,7 @@ class_name AudioManager
 ## - 通过静态方法访问：AudioManager.play_sfx_2d / play_loop / stop_loop / play_music / stop_music
 ## - 通过 ensure(root) 确保场景中存在且仅存在一个实例
 ## - 支持循环音效按 key 复用，并提供淡入淡出
-## - 支持一个全局 BGM sa播放器（MusicPlayer）
+## - 支持一个全局 BGM 播放器（MusicPlayer）
 ##
 ## 新增：
 ## - set_paused(paused): 暂停时将 loop player 与 BGM 的 stream_paused=true
@@ -54,6 +54,7 @@ static func ensure(root: Node) -> AudioManager:
         return _instance
 
     if root == null:
+        push_error("AudioManager.ensure(root): root is null.")
         return null
 
     var existing: AudioManager = _find_existing_under(root)
@@ -80,14 +81,14 @@ static func _find_existing_under(root: Node) -> AudioManager:
 
 
 static func set_paused(paused: bool) -> void:
-    var mgr: AudioManager = ensure(_safe_current_scene())
+    var mgr: AudioManager = ensure(_safe_current_scene_required("set_paused"))
     if mgr == null:
         return
     mgr._set_paused_impl(paused)
 
 
 static func set_music_enabled(enabled: bool, fade_out: float = 0.25) -> void:
-    var mgr: AudioManager = ensure(_safe_current_scene())
+    var mgr: AudioManager = ensure(_safe_current_scene_required("set_music_enabled"))
     if mgr == null:
         return
     mgr._set_music_enabled_impl(enabled, fade_out)
@@ -97,7 +98,7 @@ static func play_music(stream: AudioStream, volume_db: float = NAN, fade_in: flo
     if stream == null:
         return
 
-    var mgr: AudioManager = ensure(_safe_current_scene())
+    var mgr: AudioManager = ensure(_safe_current_scene_required("play_music"))
     if mgr == null:
         return
 
@@ -105,7 +106,7 @@ static func play_music(stream: AudioStream, volume_db: float = NAN, fade_in: flo
 
 
 static func stop_music(fade_out: float = 0.35) -> void:
-    var mgr: AudioManager = ensure(_safe_current_scene())
+    var mgr: AudioManager = ensure(_safe_current_scene_required("stop_music"))
     if mgr == null:
         return
 
@@ -116,8 +117,16 @@ static func play_sfx_2d(host: Node, stream: AudioStream, volume_db: float = NAN,
     if stream == null:
         return
 
-    var root: Node = host.get_tree().current_scene if host != null and host.get_tree() != null else null
-    var mgr: AudioManager = ensure(root)
+    if host == null:
+        push_error("AudioManager.play_sfx_2d(host, ...): host is null.")
+        return
+
+    var tree: SceneTree = host.get_tree()
+    if tree == null or tree.current_scene == null:
+        push_error("AudioManager.play_sfx_2d(host, ...): host is not inside a SceneTree/current_scene.")
+        return
+
+    var mgr: AudioManager = ensure(tree.current_scene)
     if mgr == null:
         return
 
@@ -134,7 +143,7 @@ static func play_loop(
     if stream == null:
         return
 
-    var mgr: AudioManager = ensure(_safe_current_scene())
+    var mgr: AudioManager = ensure(_safe_current_scene_required("play_loop"))
     if mgr == null:
         return
 
@@ -142,7 +151,7 @@ static func play_loop(
 
 
 static func stop_loop(key: StringName, fade_out: float = 0.10) -> void:
-    var mgr: AudioManager = ensure(_safe_current_scene())
+    var mgr: AudioManager = ensure(_safe_current_scene_required("stop_loop"))
     if mgr == null:
         return
 
@@ -154,6 +163,13 @@ static func _safe_current_scene() -> Node:
     if tree == null:
         return null
     return tree.current_scene
+
+
+static func _safe_current_scene_required(caller: String) -> Node:
+    var cs: Node = _safe_current_scene()
+    if cs == null:
+        push_error("AudioManager.%s(): no current_scene (Engine main loop not a SceneTree or scene not set)." % caller)
+    return cs
 
 
 func _set_paused_impl(paused: bool) -> void:
@@ -184,8 +200,9 @@ func _play_sfx_2d_impl(host: Node, stream: AudioStream, volume_db: float, pitch_
     p.volume_db = default_sfx_volume_db if is_nan(volume_db) else volume_db
     p.pitch_scale = maxf(pitch_scale, 0.01)
 
-    var world: Node = SceneTreeUtils.safe_world(host) if host != null else get_tree().current_scene
+    var world: Node = SceneTreeUtils.safe_world(host)
     if world == null:
+        push_error("AudioManager: SceneTreeUtils.safe_world(host) returned null.")
         return
 
     world.add_child(p)

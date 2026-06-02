@@ -76,10 +76,12 @@ func _is_valid_unit(body: Node2D) -> bool:
 
 
 func _set_target(target: CharacterBody2D) -> void:
-    if _current == target:
+    var t: CharacterBody2D = target if is_instance_valid(target) else null
+    if _current == t:
         return
-    _current = target
-    target_changed.emit(target)
+
+    _current = t
+    target_changed.emit(_current)
 
 
 func _release(unit: CharacterBody2D) -> void:
@@ -92,11 +94,15 @@ func _release(unit: CharacterBody2D) -> void:
 
 
 func _purge_invalid() -> void:
-    var n: int = _targets.size()
+    var before: int = _targets.size()
     _targets.assign(_targets.filter(is_instance_valid))
-    if _targets.size() < n and not is_instance_valid(_current):
-        _current = null
-        _set_target(_nearest())
+
+    var desired: CharacterBody2D = null
+    if not _targets.is_empty():
+        desired = _nearest()
+
+    if before != _targets.size() or not is_instance_valid(_current):
+        _set_target(desired)
 
 
 func _nearest() -> CharacterBody2D:

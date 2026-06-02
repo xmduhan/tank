@@ -1,6 +1,8 @@
 extends Area2D
 class_name TargetingComponent
 ## 攻击范围组件：检测敌方单位，管理目标列表与瞄准，统一绘制视觉标记。
+##
+## P1-1: 提供明确的强类型 API（避免外部反射式访问/猜字段）。
 
 signal target_changed(new_target: CharacterBody2D)
 
@@ -17,9 +19,26 @@ var _targets: Array[CharacterBody2D] = []
 var _current: CharacterBody2D = null
 var _color: Color
 
-var current_target: CharacterBody2D:
-    get: return _current if is_instance_valid(_current) else null
 
+# ─────────────────────────────────────────────────────────────
+# Public API (typed)
+# ─────────────────────────────────────────────────────────────
+
+func get_current_target() -> CharacterBody2D:
+    return _current if is_instance_valid(_current) else null
+
+
+func has_target() -> bool:
+    return is_instance_valid(_current)
+
+
+var current_target: CharacterBody2D:
+    get: return get_current_target()
+
+
+# ─────────────────────────────────────────────────────────────
+# Lifecycle
+# ─────────────────────────────────────────────────────────────
 
 func _ready() -> void:
     body_entered.connect(_on_body_entered)
@@ -34,7 +53,7 @@ func _process(_delta: float) -> void:
 
 
 func _draw() -> void:
-    var aimed: CharacterBody2D = current_target
+    var aimed: CharacterBody2D = get_current_target()
     for t in _targets:
         var pos: Vector2 = to_local(t.global_position)
         draw_arc(pos, marker_radius, 0, TAU, 64, _color, line_width)
@@ -51,6 +70,10 @@ func cycle_target() -> void:
     _set_target(_targets[(idx + 1) % _targets.size()])
 
 
+# ─────────────────────────────────────────────────────────────
+# Internals
+# ─────────────────────────────────────────────────────────────
+
 func _setup_color() -> void:
     var is_enemy: bool = get_parent().is_in_group("enemy")
     _color = Color(0.4, 0.6, 1.0, 0.6) if is_enemy else Color(1.0, 0.4, 0.4, 0.6)
@@ -59,7 +82,7 @@ func _setup_color() -> void:
 func _on_body_entered(body: Node2D) -> void:
     if _is_valid_unit(body) and body not in _targets:
         _targets.append(body)
-        if not current_target:
+        if not has_target():
             _set_target(body as CharacterBody2D)
 
 

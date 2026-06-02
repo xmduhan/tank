@@ -86,7 +86,7 @@ func _try_cycle_target() -> void:
 
 
 func _try_shoot() -> void:
-    var target: CharacterBody2D = _attack_range.current_target
+    var target: CharacterBody2D = _attack_range.get_current_target()
     if not is_instance_valid(target):
         return
 

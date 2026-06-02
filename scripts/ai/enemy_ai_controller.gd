@@ -70,7 +70,7 @@ func _physics_process(delta: float) -> void:
     _update_jitter_if_needed()
     _update_world_bounds()
 
-    var target_in_range: CharacterBody2D = _targeting.current_target
+    var target_in_range: CharacterBody2D = _targeting.get_current_target()
     var has_target_in_range: bool = is_instance_valid(target_in_range)
 
     if has_target_in_range:
